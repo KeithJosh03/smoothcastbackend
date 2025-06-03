@@ -21,12 +21,11 @@ class BrandController extends Controller
     }
 
     public function store(Request $request){
-        return $request;
-        // $validated = $request->validate([
-        //     'brandname' => 'required|string|max:100',
-        // ]);
-        // $brand = Brand::insert($validated);
-        // return response()->json($brand, Response::HTTP_CREATED);
+        $validated = $request->validate([
+            'brand_name' => 'required|string|max:100',
+        ]);
+        $brand = Brand::insert($validated);
+        return response()->json($brand, Response::HTTP_CREATED);
     }
 
     public function show(Brand $brand){
@@ -37,13 +36,11 @@ class BrandController extends Controller
     }
 
     public function update(Request $request, Brand $brand){
-    
         $validated = $request->validate([
-            'brandname' => 'required|string|max:100,' . $brand->id,
+            'brand_name' => 'required|string|max:100'
         ]);
-
+        
         $brand->update($validated);
-
         return response()->json($brand);
     }
 
