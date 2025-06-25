@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Colors;
+use App\Models\VariantSpecification;
 use Illuminate\Http\Request;
 
-class ColorsController extends Controller
+class VariantSpecificationController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class ColorsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Colors $colors)
+    public function show(VariantSpecification $variantSpecification)
     {
         //
     }
@@ -42,7 +42,7 @@ class ColorsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Colors $colors)
+    public function edit(VariantSpecification $variantSpecification)
     {
         //
     }
@@ -50,7 +50,7 @@ class ColorsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Colors $colors)
+    public function update(Request $request, VariantSpecification $variantSpecification)
     {
         //
     }
@@ -58,7 +58,7 @@ class ColorsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Colors $colors)
+    public function destroy(VariantSpecification $variantSpecification)
     {
         //
     }

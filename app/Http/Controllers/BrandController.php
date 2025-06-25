@@ -8,6 +8,7 @@ use Illuminate\Http\Response;
 
 class BrandController extends Controller
 {
+
     public function index(){
         $brands = Brand::all();
         return response()->json([
@@ -22,7 +23,7 @@ class BrandController extends Controller
 
     public function store(Request $request){
         $validated = $request->validate([
-            'brand_name' => 'required|string|max:100',
+        'brand_name' => ['required','string','max:100','regex:/^[a-zA-Z]+$/u'],
         ]);
         $brand = Brand::insert($validated);
         return response()->json($brand, Response::HTTP_CREATED);
@@ -33,11 +34,12 @@ class BrandController extends Controller
     }
 
     public function edit(Brand $brand){
+
     }
 
     public function update(Request $request, Brand $brand){
         $validated = $request->validate([
-            'brand_name' => 'required|string|max:100'
+        'brand_name' => ['required','string','max:100','regex:/^[a-zA-Z]+$/u'],
         ]);
         
         $brand->update($validated);
