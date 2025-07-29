@@ -14,8 +14,11 @@ use App\Http\Controllers\ProductController;
 //     return $request->user();
 // })->middleware('auth:sanctum');
 
+Route::get('/categories/getapparel', [CategoryController::class, 'getApparel']);
+
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('products', ProductController::class);
+
 
 

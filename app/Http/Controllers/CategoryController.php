@@ -48,4 +48,21 @@ class CategoryController extends Controller {
         $category->delete();
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
+
+    public function getApparel(){
+        $apparelcategory = Category::where('category_name', 'Apparel')->get();
+
+    if ($apparelcategory->isEmpty()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'No Apparel categories found.'
+        ], 404);
+    }
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Apparel categories found.',
+        'categories' => $apparelcategory
+    ]);
+    }
 }
