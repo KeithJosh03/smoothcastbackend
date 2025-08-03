@@ -2,7 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
@@ -15,6 +14,8 @@ use App\Http\Controllers\ProductController;
 // })->middleware('auth:sanctum');
 
 Route::get('/categories/getapparel', [CategoryController::class, 'getApparel']);
+Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
+
 
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('categories', CategoryController::class);

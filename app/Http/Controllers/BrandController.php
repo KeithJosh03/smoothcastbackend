@@ -23,7 +23,7 @@ class BrandController extends Controller
 
     public function store(Request $request){
         $validated = $request->validate([
-        'brand_name' => ['required','string','max:100','regex:/^[a-zA-Z]+$/u'],
+        'brand_name' => ['required','string','max:100'],
         ]);
         $brand = Brand::insert($validated);
         return response()->json($brand, Response::HTTP_CREATED);
@@ -39,7 +39,7 @@ class BrandController extends Controller
 
     public function update(Request $request, Brand $brand){
         $validated = $request->validate([
-        'brand_name' => ['required','string','max:100','regex:/^[a-zA-Z]+$/u'],
+        'brand_name' => ['required','string','max:100'],
         ]);
         
         $brand->update($validated);
@@ -49,5 +49,21 @@ class BrandController extends Controller
     public function destroy(Brand $brand){
         $brand->delete();
         return response()->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    public function specificbrand($brandname) {
+        $brand = Brand::with('productsBranded')->where('brand_name', $brandname)->first();
+
+        if (!$brand || $brand->productsBranded->isEmpty()) {
+            return response()->json([
+                'status' => true,
+                'brandproduct' => []
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'brandproduct' => $brand->productsBranded
+        ]);
     }
 }
