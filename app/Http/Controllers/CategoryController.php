@@ -22,7 +22,7 @@ class CategoryController extends Controller {
 
     public function store(Request $request){
         $validate = $request->validate([
-            'category_name' => ['required','string','max:100','regex:/^[a-zA-Z]+$/u']
+            'category_name' => ['required','string','max:100']
         ]);
         $categories = Category::insert($validate);
         return response()->json($categories, Response::HTTP_CREATED);
@@ -32,16 +32,16 @@ class CategoryController extends Controller {
         return $category;
     }
 
-
     public function edit(Category $category){
-        $validate = $request->validate([
-            'category_name' => ['required','string','max:100','regex:/^[a-zA-Z]+$/u'],
-        ]);
-        return $validate;
+        
     }
 
     public function update(Request $request, Category $category){
-    
+        $validated = $request->validate([
+            'category_name' => ['required','string','max:100'],
+        ]);
+        $category->update($validated);
+        return response()->json($category);
     }
 
     public function destroy(Category $category){
@@ -61,5 +61,11 @@ class CategoryController extends Controller {
             'status' => true,
             'categories' => $apparelcategory
         ]);
+    }
+
+    public function categoryproduct (){
+        $categories = Category::with('product')->get();
+
+        return response()->json($categories);
     }
 }

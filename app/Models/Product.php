@@ -4,24 +4,34 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Product extends Model
-{
+
+class Product extends Model {
+
     public $timestamps = false;
-    protected $primaryKey = 'product_ID';
+    protected $primaryKey = 'product_id';
     protected $fillable = [
-    'brand_ID',
-    'category_ID',
-    'productName',
-    'price',
+    'brand_id',
+    'category_id',
+    'type_id',
+    'product_name',
     'description'
     ];
 
     public function brand(): BelongsTo {
-        return $this->belongsTo(Brand::class, 'brand_ID');
+        return $this->belongsTo(Brand::class,'brand_id');
     }
 
-    public function category(): BelongsTo {
-        return $this->belongsTo(Category::class, 'category_ID');
+    public function categoryProduct(): BelongsTo {
+        return $this->belongsTo(Category::class,'category_id');
+    }
+
+    public function categorytype(): BelongsTo {
+        return $this->belongsTo(CategoryType::class,'type_id');
+    }
+
+    public function specifications(): HasMany {
+        return $this->hasMany(ProductSpecification::class, 'product_id', 'product_id');
     }
 }

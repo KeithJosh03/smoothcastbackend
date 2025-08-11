@@ -3,16 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Data\Eloquent\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Category extends Model
-{
+class Category extends Model{
+
     public $timestamps = false;
-    protected $primaryKey = 'category_ID';
-    protected $fillable = ['category_name'];
+    protected $primaryKey = 'category_id';
+    protected $fillable = [
+    'category_name'
+    ];
 
-    public function product():HasMany
-    {
-        return $this->hasMany(Product::class,'category_ID');
+    public function product(): HasMany{
+        return $this->hasMany(Product::class,'category_id');
     }
 }

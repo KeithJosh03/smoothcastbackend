@@ -6,8 +6,7 @@ use App\Models\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-class BrandController extends Controller
-{
+class BrandController extends Controller {
 
     public function index(){
         $brands = Brand::all();

@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
-class ProductController extends Controller
-{
-
+class ProductController extends Controller {
     public function index(){
         $products = Product::all();
         return response()->json([
@@ -16,20 +14,19 @@ class ProductController extends Controller
         ]);
     }
 
-
     public function create(){
     
     }
 
     public function store(Request $request){
         $validated = $request->validate([
-            'brand_ID' => ['nullable', 'exists:brands,brand_ID'],
-            'category_ID' => ['required', 'exists:categories,category_ID'],
-            'productName' => ['required','string','max:100'],
-            'price' => ['required','numeric'],
-            'description' => ['nullable','string','max:255']
+            'brand_id' => ['nullable', 'exists:brands,brand_id'],
+            'category_id' => ['required', 'exists:categories,category_id'],
+            'type_id' => ['nullable', 'exists:category_types,type_id'],
+            'product_name' => ['required','string','max:100'],
+            'description' => ['nullable','string']
         ]);
-         $product = Product::create($validated);
+        $product = Product::create($validated);
 
         return response()->json([
             'status' => true,
@@ -53,4 +50,5 @@ class ProductController extends Controller
     public function destroy(Product $product){
     
     }
+
 }

@@ -2,24 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SpecificationValue;
+use App\Models\Feature;
 use Illuminate\Http\Request;
 
-class SpecificationValueController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+class FeatureController extends Controller {
+
+    public function index() {
+        $features = Feature::all();
+        return response()->json([
+            'status' => true,
+            'features' => $features
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
+    public function create() {
+    
         //
     }
 
@@ -34,7 +31,7 @@ class SpecificationValueController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(SpecificationValue $specificationValue)
+    public function show(Feature $feature)
     {
         //
     }
@@ -42,7 +39,7 @@ class SpecificationValueController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(SpecificationValue $specificationValue)
+    public function edit(Feature $feature)
     {
         //
     }
@@ -50,7 +47,7 @@ class SpecificationValueController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, SpecificationValue $specificationValue)
+    public function update(Request $request, Feature $feature)
     {
         //
     }
@@ -58,7 +55,7 @@ class SpecificationValueController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(SpecificationValue $specificationValue)
+    public function destroy(Feature $feature)
     {
         //
     }

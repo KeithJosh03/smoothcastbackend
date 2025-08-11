@@ -5,6 +5,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CategoryTypeController;
+use App\Http\Controllers\FeatureController;
+use App\Http\Controllers\SpecificationController;
+
 
 
 
@@ -15,11 +19,15 @@ use App\Http\Controllers\ProductController;
 
 Route::get('/categories/getapparel', [CategoryController::class, 'getApparel']);
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
-
+Route::get('/categories/categoryproduct',[CategoryController::class, 'categoryproduct']);
 
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('products', ProductController::class);
 
+Route::apiResource('features', FeatureController::class);
 
+Route::apiResource('specifications', SpecificationController::class);
+
+Route::apiResource('categorytypes', CategoryTypeController::class);
 

@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Data\Eloquent\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Specification extends Model {
     public $timestamps = false;
-    protected $primaryKey = 'specification_ID';
-    protected $fillable = ['specificationName','variantspecification_ID'];
+    protected $primaryKey = 'specs_id';
+    protected $fillable = [
+    'variant_id',
+    'specs_name',
+    'spec_value'
+    ];
 
-    public function variantspecification():HasMany {
-        return $this->hasMany(VariantSpecification::class, 'variantspecification_ID');
+    public function variant(): BelongsTo {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
-
 }

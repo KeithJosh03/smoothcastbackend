@@ -2,17 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\VariantSpecification;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 
-class VariantSpecificationController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+class ProductVariantController extends Controller {
+
+    public function index() {
+
     }
 
     /**
@@ -34,7 +30,7 @@ class VariantSpecificationController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(VariantSpecification $variantSpecification)
+    public function show(ProductVariant $productVariant)
     {
         //
     }
@@ -42,7 +38,7 @@ class VariantSpecificationController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(VariantSpecification $variantSpecification)
+    public function edit(ProductVariant $productVariant)
     {
         //
     }
@@ -50,7 +46,7 @@ class VariantSpecificationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, VariantSpecification $variantSpecification)
+    public function update(Request $request, ProductVariant $productVariant)
     {
         //
     }
@@ -58,7 +54,7 @@ class VariantSpecificationController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(VariantSpecification $variantSpecification)
+    public function destroy(ProductVariant $productVariant)
     {
         //
     }

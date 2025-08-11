@@ -4,27 +4,34 @@ namespace App\Http\Controllers;
 
 use App\Models\Specification;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class SpecificationController extends Controller {
+
     public function index() {
-        $specification = Specification::all();
+        $specs = Specification::all();
         return response()->json([
             'status' => true,
-            'specifications' => $specification
+            'specs' => $specs
         ]);
     }
 
     public function create() {
-
+    
     }
 
     public function store(Request $request) {
-        $validate = $request->validate([
-            'specificationName' => ['required','max:100','string'],
-            'variantspecification_ID' => ['required','exist:variantspecification,variantvariantspecification_ID']
+        $validated = $request->validate([
+            'variant_id' => ['required','exists:product_variants,variant_id'],
+            'specs_name' => ['required','string','max:100'],
+            'specs_value' => ['required','string','max:500']
         ]);
 
+        $specs = Specification::create($validated);
+            return response()->json([
+            'status' => true,
+            'message' => 'Specs created successfully',
+            'specs' => $specs
+        ], 201);
     }
 
     public function show(Specification $specification) {
@@ -35,13 +42,12 @@ class SpecificationController extends Controller {
     
     }
 
-
     public function update(Request $request, Specification $specification) {
     
     }
 
-
-    public function destroy(Specification $specification) {
-    
+    public function destroy(Specification $specification)
+    {
+        //
     }
 }
