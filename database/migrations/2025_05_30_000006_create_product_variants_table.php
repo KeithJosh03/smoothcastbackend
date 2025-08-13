@@ -15,7 +15,6 @@ return new class extends Migration {
                 ->onDelete('cascade');
             $table->string('full_model_name',200);
             $table->decimal('price',10,2);
-            $table->timestamps();
         });
     }
     public function down(): void {

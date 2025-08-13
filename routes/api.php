@@ -8,6 +8,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryTypeController;
 use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\SpecificationController;
+use App\Http\Controllers\ProductVariantController;
 
 
 
@@ -24,6 +25,8 @@ Route::get('/categories/categoryproduct',[CategoryController::class, 'categorypr
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('products', ProductController::class);
+Route::apiResource('productvariant',ProductVariantController::class);
+
 
 Route::apiResource('features', FeatureController::class);
 

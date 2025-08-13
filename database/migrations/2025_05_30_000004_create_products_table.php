@@ -24,6 +24,7 @@ return new class extends Migration {
                 ->constrained('brands','brand_id')
                 ->onDelete('cascade');
             $table->string('product_name', 100);
+            $table->decimal('base_price',10,2);
             $table->text('description')
                 ->nullable();
         });

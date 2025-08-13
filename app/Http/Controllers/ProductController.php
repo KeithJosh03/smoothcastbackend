@@ -24,6 +24,7 @@ class ProductController extends Controller {
             'category_id' => ['required', 'exists:categories,category_id'],
             'type_id' => ['nullable', 'exists:category_types,type_id'],
             'product_name' => ['required','string','max:100'],
+            'base_price' => ['required','decimal:10,2'],
             'description' => ['nullable','string']
         ]);
         $product = Product::create($validated);

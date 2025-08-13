@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relation\BelongsTo;
 
 class ProductVariant extends Model {
     public $timestamp = false;
@@ -14,7 +15,7 @@ class ProductVariant extends Model {
     ];
 
     
-    public function product(): HasMany {
-        return $this->hasMany(Product::class, 'product_id', 'product_id');
+    public function product(): BelongsTo {
+        return $this->belongsTo(Product::class, 'product_id', 'product_id');
     }
 }

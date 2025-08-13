@@ -16,6 +16,7 @@ class Product extends Model {
     'category_id',
     'type_id',
     'product_name',
+    'base_price',
     'description'
     ];
 
@@ -33,5 +34,9 @@ class Product extends Model {
 
     public function specifications(): HasMany {
         return $this->hasMany(ProductSpecification::class, 'product_id', 'product_id');
+    }
+
+    public function productVariant(): HasMany {
+        return $this->hasMany(productVariant::class, 'product_id', 'product_id');
     }
 }

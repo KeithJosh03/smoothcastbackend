@@ -8,31 +8,23 @@ use Illuminate\Http\Request;
 class ProductVariantController extends Controller {
 
     public function index() {
-
+        $variants = ProductVariant::all();
+        return response()->json([
+            'status' => true,
+            'variants' => $variants
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function create() {
+    
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function store(Request $request) {
+    
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(ProductVariant $productVariant)
-    {
-        //
+    public function show(ProductVariant $productVariant) {
+    
     }
 
     /**
