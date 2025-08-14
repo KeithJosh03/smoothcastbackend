@@ -52,4 +52,8 @@ class ProductController extends Controller {
     
     }
 
+    // public function productcategorycollection () {
+    //     $collectionproduct = Product::with('category','brands')->get();
+    //     return response()->json($collectionproduct);
+    // }
 }

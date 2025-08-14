@@ -11,16 +11,11 @@ use App\Http\Controllers\SpecificationController;
 use App\Http\Controllers\ProductVariantController;
 
 
-
-
-
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
-
 Route::get('/categories/getapparel', [CategoryController::class, 'getApparel']);
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
-Route::get('/categories/categoryproduct',[CategoryController::class, 'categoryproduct']);
+Route::get('/categories/categorycollection',[CategoryController::class, 'categoryproductcollection']);
+// Route::get('/products/categoriedcollection/',[ProductController::class, 'productcategorycollection']);
+
 
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('categories', CategoryController::class);
