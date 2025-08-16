@@ -12,7 +12,9 @@ use App\Http\Controllers\ProductVariantController;
 
 
 Route::get('/categories/getapparel', [CategoryController::class, 'getApparel']);
+Route::get('/categories/specificCategory/{categoryname}', [CategoryController::class, 'specificCategory']);
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
+
 Route::get('/categories/categorycollection',[CategoryController::class, 'categoryproductcollection']);
 // Route::get('/products/categoriedcollection/',[ProductController::class, 'productcategorycollection']);
 
