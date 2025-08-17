@@ -77,18 +77,20 @@ class CategoryController extends Controller {
     }
 
     public function specificCategory($categoryname) {
-        $categories = Category::with('product')->where('category_name', $categoryname)->get();
+        $category = Category::with('product.brand')
+                ->where('category_name', $categoryname)
+                ->first();
 
-        if (!$categories || $categories->isEmpty()) {
+        if (!$category || $category->product->isEmpty()) {
             return response()->json([
                 'status' => true,
-                'categories' => []
+                'products' => []
             ]);
         }
 
         return response()->json([
             'status' => true,
-            'categories' => $categories
-        ]); 
+            'products' => $category->product
+        ]);
     }
 }
