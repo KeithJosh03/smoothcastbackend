@@ -26,7 +26,27 @@ class CategoryTypesSeeder extends Seeder {
         [
         'category_id' => 1,
         'type_name' => 'Electric Reels'
-        ]
+        ],
+        [
+        'category_id' => 2,
+        'type_name' => 'Hard Bait'
+        ],
+        [
+        'category_id' => 2,
+        'type_name' => 'Soft Bait'
+        ],
+        [
+        'category_id' => 3,
+        'type_name' => 'Spinning Rods'
+        ],
+        [
+        'category_id' => 3,
+        'type_name' => 'Overhead/Baitcasting Rods'
+        ],
+        [
+        'category_id' => 3,
+        'type_name' => 'Jigging Rods'
+        ],
      ]);
     }
 }

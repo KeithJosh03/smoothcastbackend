@@ -11,7 +11,10 @@ class BrandSeeder extends Seeder {
     public function run(): void {
         DB::table('brands')->insert([
             ['brand_name' => 'Daiwa'],
-            ['brand_name' => 'Smith']
+            ['brand_name' => 'Smith'],
+            ['brand_name' => 'Bait Breath'],
+            ['brand_name' => 'Gekkabijin'],
+            ['brand_name' => 'Ecooda']
         ]);
     }
 }

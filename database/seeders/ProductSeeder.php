@@ -42,7 +42,103 @@ Now, after a long history of innovation, and endless challenges, that dream has 
             'base_price' => 50750.00,
             'product_name' => "Daiwa Seaborg 500MJ-AT",
             'description' => null
-            ]
+            ],
+            [
+            'brand_id' => 1,
+            'category_id' => 1,
+            'type_id' => 3,
+            'base_price' => 7800.00,
+            'product_name' => "19 LEXA LT5000D-CXH",
+            'description' => null
+            ],
+            [
+            'brand_id' => 1,
+            'category_id' => 1,
+            'type_id' => 3,
+            'base_price' => 43000.00,
+            'product_name' => "20 SALTIGA (G) 8000P",
+            'description' => null
+            ],
+            [
+            'brand_id' => 1,
+            'category_id' => 1,
+            'type_id' => 3,
+            'base_price' => 4380.00,
+            'product_name' => "20 TAMS LT2500",
+            'description' => null
+            ],
+            [
+            'brand_id' => 1,
+            'category_id' => 1,
+            'type_id' => 3,
+            'base_price' => 4600.00,
+            'product_name' => "20 TAMS LT4000-C",
+            'description' => null
+            ],
+            [
+            'brand_id' => 1,
+            'category_id' => 1,
+            'type_id' => 1,
+            'base_price' => 4200.00,
+            'product_name' => "22Daiwa PT 150H BK",
+            'description' => null
+            ],
+            [
+            'brand_id' => 3,
+            'category_id' => 2,
+            'type_id' => 6,
+            'base_price' => 280.00,
+            'product_name' => "Bait Breath AJ-R Ajing Reversible (8/25)",
+            'description' => null
+            ],
+            [
+            'brand_id' => 2,
+            'category_id' => 2,
+            'type_id' => 5,
+            'base_price' => 1850.00,
+            'product_name' => "ACUP HAMMER HEAD 145MM/54G FLOATING COL 05",
+            'description' => null
+            ],
+            [
+            'brand_id' => 4,
+            'category_id' => 2,
+            'type_id' => 6,
+            'base_price' => 290.00,
+            'product_name' => "Gekkabijin Beam Stick Kiwami 2.2",
+            'description' => null
+            ],
+            [
+            'brand_id' => 2,
+            'category_id' => 3,
+            'type_id' => 7,
+            'base_price' => 18000.00,
+            'product_name' => "AOF K - FIBRE 76H",
+            'description' => null
+            ],
+            [
+            'brand_id' => 5,
+            'category_id' => 3,
+            'type_id' => 8,
+            'base_price' => 7200.00,
+            'product_name' => "BLACK EXPERT II SLOW JIGGING EBESJ II-B602MH",
+            'description' => null
+            ],
+            [
+            'brand_id' => 1,
+            'category_id' => 3,
+            'type_id' => 9,
+            'base_price' => 5800.00,
+            'product_name' => "Daiwa Blast SLJ AP 63LS-S (Super Light Jigging JDM)",
+            'description' => null
+            ],
+            [
+            'brand_id' => 1,
+            'category_id' => 3,
+            'type_id' => 7,
+            'base_price' => 4000.00,
+            'product_name' => "Daiwa Lurenist 74ul-s rod",
+            'description' => null
+            ],
         ]);
     }
 }

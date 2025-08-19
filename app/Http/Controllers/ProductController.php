@@ -52,8 +52,18 @@ class ProductController extends Controller {
     
     }
 
-    // public function productcategorycollection () {
-    //     $collectionproduct = Product::with('category','brands')->get();
-    //     return response()->json($collectionproduct);
-    // }
+    public function productSpecificDetail ($productname) {
+        $productdetail = Product::with('brand')
+                        ->where('product_name', $productname)->get();
+        if ($productdetail->isEmpty()) {
+            return response()->json([
+                'status' => true,
+                'productdetail' => []
+            ]);
+        }
+        return response()->json([
+            'status' => true,
+            'productdetail' => $productdetail
+        ]);
+    }
 }

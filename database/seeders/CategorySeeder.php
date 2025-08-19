@@ -11,7 +11,8 @@ class CategorySeeder extends Seeder {
     public function run(): void {
         DB::table('categories')->insert([
             ['category_name' => 'Reels'],
-            ['category_name' => 'Lures']
+            ['category_name' => 'Lures'],
+            ['category_name' => 'Rods'],
         ]);
     }
 }

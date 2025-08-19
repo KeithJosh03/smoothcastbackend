@@ -66,7 +66,8 @@ class CategoryController extends Controller {
     public function categoryproductcollection () {
         $categories = Category::select('category_id', 'category_name')
             ->with(['product' => function ($query) {
-                    $query->select('product_id', 'category_id', 'product_name', 'base_price','brand_id');
+                    $query->select('product_id', 'category_id', 'product_name', 'base_price','brand_id')
+                    ->take(4);
                 },
                 'product.brand' => function ($query) {
                     $query->select('brand_id', 'brand_name');
