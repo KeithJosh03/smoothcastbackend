@@ -55,7 +55,7 @@ class ProductController extends Controller {
     public function productSpecificDetail ($productname) {
         $productdetail = Product::with('brand')
                         ->where('product_name', $productname)->get();
-        if ($productdetail->isEmpty()) {
+        if($productdetail->isEmpty()) {
             return response()->json([
                 'status' => true,
                 'productdetail' => []
@@ -65,5 +65,22 @@ class ProductController extends Controller {
             'status' => true,
             'productdetail' => $productdetail
         ]);
+    }
+
+    public function productSearch ($productname) {
+        $products = Product::where('product_name','LIKE','%'. $productname . '%')
+                    ->select('product_id','product_name')
+                    ->get();
+        if($products->isEmpty()){
+            return response()->json([
+            'status' => true,
+            'products' => []
+            ]);
+        }
+        return response()->json([
+            'status' => true,
+            'products' => $products
+        ]);
+
     }
 }

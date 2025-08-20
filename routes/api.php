@@ -17,6 +17,7 @@ Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specif
 
 Route::get('/categories/categorycollection',[CategoryController::class, 'categoryproductcollection']);
 Route::get('/products/productdetail/{productname}', [ProductController::class, 'productSpecificDetail']);
+Route::get('/products/productsearch/{productname}', [ProductController::class, 'productSearch']);
 
 
 Route::apiResource('brands', BrandController::class);
