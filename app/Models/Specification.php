@@ -9,12 +9,11 @@ class Specification extends Model {
     public $timestamps = false;
     protected $primaryKey = 'specs_id';
     protected $fillable = [
-    'variant_id',
-    'specs_name',
-    'spec_value'
+    'product_id',
+    'specification'
     ];
 
-    public function variant(): BelongsTo {
-        return $this->belongsTo(ProductVariant::class, 'variant_id');
+    public function products(): BelongsTo {
+        return $this->belongsTo(Product::class, 'product_id');
     }
 }

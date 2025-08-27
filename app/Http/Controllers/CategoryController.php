@@ -49,20 +49,6 @@ class CategoryController extends Controller {
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function getApparel(){
-        $apparelcategory = Category::where('category_name', 'Apparel')->get();
-        if ($apparelcategory->isEmpty()) {
-            return response()->json([
-                'status' => true,
-                'categories' => []
-            ]);
-        }
-        return response()->json([
-            'status' => true,
-            'categories' => $apparelcategory
-        ]);
-    }
-
     public function categoryproductcollection () {
         $categories = Category::select('category_id', 'category_name')
             ->with(['product' => function ($query) {

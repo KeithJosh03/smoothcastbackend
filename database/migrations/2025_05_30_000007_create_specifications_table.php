@@ -10,11 +10,10 @@ return new class extends Migration {
         Schema::create('specifications', function (Blueprint $table) {
             $table->id('specs_id');
             $table
-                ->foreignId('variant_id')
-                ->constrained('product_variants', 'variant_id')
+                ->foreignId('product_id')
+                ->constrained('products', 'product_id')
                 ->onDelete('cascade');
-            $table->string('specs_name',100);
-            $table->string('value',500);
+            $table->text('specification');
         });
     }
 

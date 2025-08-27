@@ -14,7 +14,8 @@ class BrandSeeder extends Seeder {
             ['brand_name' => 'Smith'],
             ['brand_name' => 'Bait Breath'],
             ['brand_name' => 'Gekkabijin'],
-            ['brand_name' => 'Ecooda']
+            ['brand_name' => 'Ecooda'],
+            ['brand_name' => 'Moasmdoadmoasmdioamsdi']
         ]);
     }
 }
