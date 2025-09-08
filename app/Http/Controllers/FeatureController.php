@@ -20,19 +20,24 @@ class FeatureController extends Controller {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function store(Request $request) {
+        $validated = $request->validate([
+            'product_id' => ['required','exists:products,product_id'],
+            'features' => ['required','string']
+        ]);
+        $specs = Feature::create($validated);
+            return response()->json([
+            'status' => true,
+            'message' => 'Specs created successfully',
+            'specs' => $specs
+        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Feature $feature)
-    {
+    public function show(Feature $feature) {
+    
         //
     }
 

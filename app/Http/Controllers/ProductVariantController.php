@@ -27,12 +27,8 @@ class ProductVariantController extends Controller {
     
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(ProductVariant $productVariant)
-    {
-        //
+    public function edit(ProductVariant $productVariant) {
+    
     }
 
     /**

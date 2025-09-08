@@ -23,6 +23,7 @@ class BrandController extends Controller {
     public function store(Request $request){
         $validated = $request->validate([
         'brand_name' => ['required','string','max:100'],
+        'imageUrl' => ['nullable','string','max:100']
         ]);
         $brand = Brand::insert($validated);
         return response()->json($brand, Response::HTTP_CREATED);
@@ -51,9 +52,11 @@ class BrandController extends Controller {
     }
 
     public function specificbrand($brandname) {
-        $brand = Brand::with('productsBranded')->where('brand_name', $brandname)->first();
+        $brand = Brand::with('brandProducts')
+            ->where('brand_name', $brandname)
+            ->first(); // fetch single record
 
-        if (!$brand || $brand->productsBranded->isEmpty()) {
+        if (!$brand || $brand->brandProducts->isEmpty()) {
             return response()->json([
                 'status' => true,
                 'brandproduct' => []
@@ -62,7 +65,23 @@ class BrandController extends Controller {
 
         return response()->json([
             'status' => true,
-            'brandproduct' => $brand->productsBranded
+            'brandproduct' => $brand->brandProducts
+        ]);
+    }
+
+
+    public function brandLogo () {
+        $brand = Brand::whereNotNull('imageUrl')->get();
+
+        if (!$brand || $brand->isEmpty()) {
+            return response()->json([
+                'status' => true,
+                'brandLogo' => []
+            ]);
+        }
+        return response()->json([
+            'status' => true,
+            'brandLogo' => $brand
         ]);
     }
 }

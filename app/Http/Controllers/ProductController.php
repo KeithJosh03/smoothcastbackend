@@ -52,13 +52,20 @@ class ProductController extends Controller {
     
     }
 
-    public function productSpecificDetail ($productname) {
-        $productdetail = Product::with('brand')
-                        ->where('product_name', $productname)->get();
-        if($productdetail->isEmpty()) {
+    public function productSpecificDetail ($productId) {
+        $productdetail = Product::with([
+                        'brand',
+                        'specification',
+                        'features',
+                        'productVariant.allImage',
+                        'categorytype'
+                        ])
+                        ->where('product_id', $productId)
+                        ->first();
+        if(!$productdetail) {
             return response()->json([
                 'status' => true,
-                'productdetail' => []
+                'productdetail' => null
             ]);
         }
         return response()->json([

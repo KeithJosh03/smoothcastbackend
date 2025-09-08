@@ -18,6 +18,7 @@ return new class extends Migration
                 ->constrained('product_variants', 'variant_id')
                 ->onDelete('cascade');
             $table->string('url',100);
+            $table->boolean('isMain');
         });
     }
     public function down(): void

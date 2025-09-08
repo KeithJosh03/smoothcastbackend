@@ -13,6 +13,8 @@ class CategorySeeder extends Seeder {
             ['category_name' => 'Reels'],
             ['category_name' => 'Lures'],
             ['category_name' => 'Rods'],
+            ['category_name' => 'Fishing Accessories'],
         ]);
     }
 }
+

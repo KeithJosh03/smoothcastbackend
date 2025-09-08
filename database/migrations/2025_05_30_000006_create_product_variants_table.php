@@ -13,7 +13,7 @@ return new class extends Migration {
                 ->foreignId('product_id')
                 ->constrained('products','product_id')
                 ->onDelete('cascade');
-            $table->string('full_model_name',200);
+            $table->string('name',200);
             $table->decimal('price',10,2);
         });
     }

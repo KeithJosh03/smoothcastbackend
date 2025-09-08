@@ -51,20 +51,24 @@ class CategoryController extends Controller {
 
     public function categoryproductcollection () {
         $categories = Category::select('category_id', 'category_name')
-            ->with(['product' => function ($query) {
-                    $query->select('product_id', 'category_id', 'product_name', 'base_price','brand_id')
-                    ->take(4);
-                },
-                'product.brand' => function ($query) {
-                    $query->select('brand_id', 'brand_name');
-                }
-            ])
+        ->with([
+            'product' => function ($query) {
+                $query->select('product_id', 'category_id', 'product_name', 'base_price', 'brand_id')
+                      ->take(4);
+            },
+            'product.brand' => function ($query) {
+                $query->select('brand_id', 'brand_name');
+            },
+            'product.productVariant.mainImage' => function ($query) {
+                $query->select('productImg_id', 'variant_id', 'url', 'isMain');
+            },
+        ])
         ->get();
         return response()->json($categories);
     }
 
     public function specificCategory($categoryname) {
-        $category = Category::with('product.brand')
+        $category = Category::with(['product.brand','product.category','product.productVariant.mainImage'])
                 ->where('category_name', $categoryname)
                 ->first();
 

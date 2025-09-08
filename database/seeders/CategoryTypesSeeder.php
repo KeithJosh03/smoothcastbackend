@@ -47,6 +47,14 @@ class CategoryTypesSeeder extends Seeder {
         'category_id' => 3,
         'type_name' => 'Jigging Rods'
         ],
+        [
+        'category_id' => 4,
+        'type_name' => 'Sinkers'
+        ],
+        [
+        'category_id' => 4,
+        'type_name' => 'Bags & Cases'
+        ],
      ]);
     }
 }

@@ -10,8 +10,7 @@ class Feature extends Model {
     protected $primaryKey = 'feature_id';
     protected $fillable = [
     'product_id',
-    'feature_name',
-    'value'
+    'features',
     ];
 
     public function product():BelongsTo {

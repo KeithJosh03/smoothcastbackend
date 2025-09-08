@@ -10,10 +10,11 @@ class Specification extends Model {
     protected $primaryKey = 'specs_id';
     protected $fillable = [
     'product_id',
-    'specification'
+    'specs_name',
+    'specs_value'
     ];
 
     public function products(): BelongsTo {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(Product::class,'product_id');
     }
 }

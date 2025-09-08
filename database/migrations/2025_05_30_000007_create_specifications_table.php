@@ -13,7 +13,8 @@ return new class extends Migration {
                 ->foreignId('product_id')
                 ->constrained('products', 'product_id')
                 ->onDelete('cascade');
-            $table->text('specification');
+            $table->string('specs_name',255);
+            $table->string('specs_value',255);
         });
     }
 

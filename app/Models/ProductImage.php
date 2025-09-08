@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 
 class ProductImage extends Model {
@@ -14,8 +14,7 @@ class ProductImage extends Model {
     'url'
     ];
 
-
-    public function productvariants(): HasMany {
-        return $this->hasMany(ProductVariant::class, 'variant_id', 'variant_id');
+    public function productvariants(): BelongsTo {
+        return $this->belongsTo(ProductVariant::class,'variant_id');
     }
 }

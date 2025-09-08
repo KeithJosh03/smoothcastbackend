@@ -5,22 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
 
-class ProductImageController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+class ProductImageController extends Controller {
+
+    public function index() {
+        $productimage = ProductImage::all();
+        return response()->json([
+            'status' => true,
+            'images' => $productimage
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function create() {
+    
     }
 
     /**

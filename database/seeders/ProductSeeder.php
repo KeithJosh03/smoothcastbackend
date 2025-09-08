@@ -139,6 +139,30 @@ Now, after a long history of innovation, and endless challenges, that dream has 
             'product_name' => "Daiwa Lurenist 74ul-s rod",
             'description' => null
             ],
+            [
+            'brand_id' => 8,
+            'category_id' => 4,
+            'type_id' => 10,
+            'base_price' => 180.00,
+            'product_name' => "Decoy Bullet Sinker",
+            'description' => "A standard bullet sinker that matches basic rigs such as Texas rigs and Carolina rigs. A protection tube is attached to the through the part to prevent line breaks. Even if it looks normal, we pay attention to the details!"
+            ],
+            [
+            'brand_id' => 9,
+            'category_id' => 4,
+            'type_id' => 11,
+            'base_price' => 65.00,
+            'product_name' => "Mebao Accessory Box MBE1-103L/203L/309L",
+            'description' => "A multifunctional Bait and Accessory Box Made of thickened PP material that comes in 3 different configuration for the anglers preference. Its has a large capacity size of 175 x 105 x 36mm hat is very convenient to place on backpacks or tackle boxes."
+            ],
+            [
+            'brand_id' => 10,
+            'category_id' => 2,
+            'type_id' => 2,
+            'base_price' => 210.00,
+            'product_name' => "Tukob Nomadic Piercer Ford Darting",
+            'description' => null
+            ],
         ]);
     }
 }

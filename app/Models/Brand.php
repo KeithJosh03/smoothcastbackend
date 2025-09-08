@@ -10,10 +10,11 @@ class Brand extends Model{
     public $timestamps = false;
     protected $primaryKey = 'brand_id';
     protected $fillable = [
-    'brand_name'
+    'brand_name',
+    'urlImage'
     ];
 
-    public function product():HasMany{
+    public function brandProducts():HasMany{
         return $this->hasMany(Product::class,'brand_id');
     }
 }

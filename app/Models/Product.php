@@ -28,15 +28,20 @@ class Product extends Model {
         return $this->belongsTo(Category::class,'category_id');
     }
 
+    public function productVariant(): HasMany {
+        return $this->hasMany(ProductVariant::class, 'product_id', 'product_id');
+    }
+
     public function categorytype(): BelongsTo {
         return $this->belongsTo(CategoryType::class,'type_id');
     }
 
-    public function specifications(): HasMany {
-        return $this->hasMany(ProductSpecification::class, 'product_id', 'product_id');
+    public function specification(): HasMany {
+        return $this->hasMany(Specification::class, 'product_id', 'product_id');
+    }
+    
+    public function features(): HasMany {
+        return $this->hasMany(Feature::class, 'product_id', 'product_id');
     }
 
-    public function productVariant(): HasMany {
-        return $this->hasMany(productVariant::class, 'product_id', 'product_id');
-    }
 }

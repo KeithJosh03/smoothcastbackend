@@ -21,10 +21,10 @@ class SpecificationController extends Controller {
 
     public function store(Request $request) {
         $validated = $request->validate([
-            'variant_id' => ['required','exists:product_variants,variant_id'],
-            'specification' => ['required','string','max:500']
+            'product_id' => ['required','exists:products,product_id'],
+            'specs_name' => ['required','string','max:255'],
+            'specs_value' => ['required','string','max:255']
         ]);
-
         $specs = Specification::create($validated);
             return response()->json([
             'status' => true,
