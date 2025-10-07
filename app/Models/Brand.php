@@ -11,7 +11,7 @@ class Brand extends Model{
     protected $primaryKey = 'brand_id';
     protected $fillable = [
     'brand_name',
-    'urlImage'
+    'image_url'
     ];
 
     public function brandProducts():HasMany{

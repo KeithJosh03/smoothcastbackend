@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProductImage;
+use App\Models\Package;
 use Illuminate\Http\Request;
+use App\Http\Resources\PackageResource;
 
-class ProductImageController extends Controller {
+class PackageController extends Controller {
 
+    /**
+     * Display a listing of the resource.
+     */
     public function index() {
-        $productimage = ProductImage::all();
+        $package = Package::all();
         return response()->json([
             'status' => true,
-            'images' => $productimage
+            'brands' => PackageResource::collection($package)
         ]);
     }
 
@@ -19,6 +23,9 @@ class ProductImageController extends Controller {
     
     }
 
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(Request $request)
     {
         //
@@ -27,7 +34,7 @@ class ProductImageController extends Controller {
     /**
      * Display the specified resource.
      */
-    public function show(ProductImage $productImage)
+    public function show(Package $package)
     {
         //
     }
@@ -35,7 +42,7 @@ class ProductImageController extends Controller {
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(ProductImage $productImage)
+    public function edit(Package $package)
     {
         //
     }
@@ -43,7 +50,7 @@ class ProductImageController extends Controller {
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ProductImage $productImage)
+    public function update(Request $request, Package $package)
     {
         //
     }
@@ -51,7 +58,7 @@ class ProductImageController extends Controller {
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ProductImage $productImage)
+    public function destroy(Package $package)
     {
         //
     }

@@ -12,43 +12,43 @@ class BrandSeeder extends Seeder {
         DB::table('brands')->insert([
             [
             'brand_name' => 'Daiwa',
-            'imageUrl' => 'daiwa.png'
+            'image_url' => 'daiwa.png'
             ],
             [
             'brand_name' => 'Smith',
-            'imageUrl' => 'smith.png'
+            'image_url' => 'smith.png'
             ],
             [
             'brand_name' => 'Bait Breath',
-            'imageUrl' => 'baitbreath.png'
+            'image_url' => 'baitbreath.png'
             ],
             [
             'brand_name' => 'Gekkabijin',
-            'imageUrl' => null
+            'image_url' => null
             ],
             [
             'brand_name' => 'Ecooda',
-            'imageUrl' => null
+            'image_url' => null
             ],
             [
             'brand_name' => 'Abu Garcia',
-            'imageUrl' => 'abugarcia.svg'
+            'image_url' => 'abugarcia.svg'
             ],
             [
             'brand_name' => 'Shimano',
-            'imageUrl' => 'shimano.png'
+            'image_url' => 'shimano.png'
             ],
             [
             'brand_name' => 'Decoy',
-            'imageUrl' => 'decoy.png'
+            'image_url' => 'decoy.png'
             ],
             [
             'brand_name' => 'MeBao',
-            'imageUrl' => 'mebaologo.png'
+            'image_url' => 'mebaologo.png'
             ],
             [
             'brand_name' => 'Tukob',
-            'imageUrl' => 'tukob.png'
+            'image_url' => 'tukob.png'
             ]
         ]);
     }

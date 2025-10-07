@@ -10,7 +10,7 @@ return new class extends Migration {
             $table->id('brand_id');
             $table->string('brand_name',100);
             $table
-            ->string('imageUrl',100)
+            ->string('image_url',255)
             ->nullable();
         });
     }

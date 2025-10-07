@@ -6,13 +6,17 @@ use App\Models\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
+use App\Http\Resources\BrandSpecificProducts;
+use App\Http\Resources\BrandResource;
+
+
 class BrandController extends Controller {
 
     public function index(){
         $brands = Brand::all();
         return response()->json([
             'status' => true,
-            'brands' => $brands
+            'brands' => BrandResource::collection($brands)
         ]);
     }
 
@@ -23,7 +27,7 @@ class BrandController extends Controller {
     public function store(Request $request){
         $validated = $request->validate([
         'brand_name' => ['required','string','max:100'],
-        'imageUrl' => ['nullable','string','max:100']
+        'image_url' => ['nullable','string','max:100']
         ]);
         $brand = Brand::insert($validated);
         return response()->json($brand, Response::HTTP_CREATED);
@@ -52,27 +56,21 @@ class BrandController extends Controller {
     }
 
     public function specificbrand($brandname) {
-        $brand = Brand::with('brandProducts')
-            ->where('brand_name', $brandname)
-            ->first(); // fetch single record
-
-        if (!$brand || $brand->brandProducts->isEmpty()) {
-            return response()->json([
-                'status' => true,
-                'brandproduct' => []
-            ]);
-        }
+        $brandproducts = Brand::where('brand_name', $brandname)
+            ->with(['brandProducts.categorytype','brandProducts.productVariant.mainImage']) 
+            ->first(); 
 
         return response()->json([
             'status' => true,
-            'brandproduct' => $brand->brandProducts
+            'brandImage' => $brandproducts->image_url,
+            'products' => BrandSpecificProducts::collection($brandproducts->brandProducts)
         ]);
     }
 
 
-    public function brandLogo () {
-        $brand = Brand::whereNotNull('imageUrl')->get();
 
+    public function brandLogo () {
+        $brand = Brand::whereNotNull('image_url')->get();
         if (!$brand || $brand->isEmpty()) {
             return response()->json([
                 'status' => true,
@@ -81,7 +79,16 @@ class BrandController extends Controller {
         }
         return response()->json([
             'status' => true,
-            'brandLogo' => $brand
+            'brandlogo' => BrandResource::collection($brand)
         ]);
     }
+
+    public function headerBrand(){
+        $brands = Brand::all(['brand_id','brand_name']);
+        return response()->json([
+            'status' => true,
+            'brands' => BrandResource::collection($brands)
+        ]);
+    }
+
 }

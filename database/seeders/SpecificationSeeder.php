@@ -11,245 +11,106 @@ class SpecificationSeeder extends Seeder {
     db::table('specifications')->insert([
         [
         'product_id' => 1,
-        'specs_name' => 'Gear Ratio',
-        'specs_value' => '6.2:1'
-        ],
-        [
-        'product_id' => 1,
-        'specs_name' => 'Max Drag',
-        'specs_value' => '22lb'
-        ],
-        [
-        'product_id' => 1,
-        'specs_name' => 'Mono Cap',
-        'specs_value' => '8/160,10/130'
-        ],
-        [
-        'product_id' => 1,
-        'specs_name' => 'Braid Cap',
-        'specs_value' => '8/220,10/185'
-        ],
-        [
-        'product_id' => 1,
-        'specs_name' => 'Ball Bearing',
-        'specs_value' => '12 CRBB+1'
-        ],
-        [
-        'product_id' => 1,
-        'specs_name' => 'Inches per handle turn',
-        'specs_value' => '36.8'
-        ],
-        [
-        'product_id' => 1,
-        'specs_name' => 'Weight',
-        'specs_value' => '6.5oz'
+        'specification' => 
+        'Gear Ratio: 6.2:1
+        Max Drag: 22lb
+        Mono Cap: 8/160,10/130
+        Braid Cap: 8/220,10/185
+        Ball Bearing: 12 CRBB+1
+        Inches per handle turn: 36.8
+        Weight: 6.5oz'
         ],
         [
         'product_id' => 3,
-        'specs_name' => 'Length',
-        'specs_value' => '185MM'
-        ],
-        [
-        'product_id' => 3,
-        'specs_name' => 'Weight',
-        'specs_value' => '115GM'
-        ],
-        [
-        'product_id' => 3,
-        'specs_name' => 'Color',
-        'specs_value' => 'COL 04'
+        'specification' => 
+        'Length: 185MM
+        Weight: 115GM
+        Color: COL 04'
         ],
         [
         'product_id' => 5,
-        'specs_name' => 'Line Retrieve',
-        'specs_value' => '105'
-        ],
-        [
-        'product_id' => 5,
-        'specs_name' => 'Gear Ratio',
-        'specs_value' => '6.2'
-        ],
-        [
-        'product_id' => 5,
-        'specs_name' => 'Max Drag',
-        'specs_value' => '12'
-        ],
-        [
-        'product_id' => 5,
-        'specs_name' => 'Weight',
-        'specs_value' => '290'
-        ],
-        [
-        'product_id' => 5,
-        'specs_name' => 'Braid Cap',
-        'specs_value' => '#2-350, #2.5-300, #3-210'
-        ],
-        [
-        'product_id' => 5,
-        'specs_name' => 'Bearing',
-        'specs_value' => '5 / 1'
+        'specification' => 
+        'Line Retrieve: 105
+        Gear Ratio: 6.2
+        Max Drag: 12
+        Weight: 290
+        Braid Cap: #2-350, #2.5-300, #3-210
+        Bearing: 5 / 1'
         ],
         [
         'product_id' => 6,
-        'specs_name' => 'Bearings',
-        'specs_value' => '12BB (6CRBB-2MSBB)'
-        ],
-        [
-        'product_id' => 6,
-        'specs_name' => 'Capacity PE',
-        'specs_value' => 'PE4 - 300m'
-        ],
-        [
-        'product_id' => 6,
-        'specs_name' => 'Max Drag',
-        'specs_value' => '25kg'
-        ],
-        [
-        'product_id' => 6,
-        'specs_name' => 'Gear',
-        'specs_value' => '4.8'
-        ],
-        [
-        'product_id' => 6,
-        'specs_name' => 'Pickup',
-        'specs_value' => '92cm'
-        ],
-        [
-        'product_id' => 6,
-        'specs_name' => 'Weight',
-        'specs_value' => '645g'
+        'specification' => 
+        'Bearings: 12BB (6CRBB-2MSBB)
+        Capacity PE: PE4 - 300m
+        Max Drag: 25kg
+        Gear: 4.8
+        Pickup: 92cm
+        Weight: 645g'
         ],
         [
         'product_id' => 7,
-        'specs_name' => 'Weight',
-        'specs_value' => '10kg'
-        ],
-        [
-        'product_id' => 7,
-        'specs_name' => 'Braid Line Capacity',
-        'specs_value' => '(#PE/m): #1.5/200'
-        ],
-        [
-        'product_id' => 7,
-        'specs_name' => 'Gear Ratio',
-        'specs_value' => '5.2:1'
-        ],
-        [
-        'product_id' => 7,
-        'specs_name' => 'Water',
-        'specs_value' => 'Salt Water'
-        ],
-        [
-        'product_id' => 7,
-        'specs_name' => 'Ball Bearing',
-        'specs_value' => '6BB + 1RB'
-        ],
-        [
-        'product_id' => 7,
-        'specs_name' => 'Line Per Handle Turn',
-        'specs_value' => '82cm'
-        ],
-        [
-        'product_id' => 7,
-        'specs_name' => 'Weight',
-        'specs_value' => '275g'
+        'specification' => 
+        'Weight: 10kg
+        Braid Line Capacity: (#PE/m): #1.5/200
+        Gear Ratio: 5.2:1
+        Water: Salt Water
+        Ball Bearing: 6BB + 1RB
+        Line Per Handle Turn: 82cm
+        Weight: 275g'
         ],
         [
         'product_id' => 2,
-        'specs_name' => 'Winding length (cm / one rotation of handle)',
-        'specs_value' => '105'
+        'specification' => 
+        'Winding length (cm / one rotation of handle):105
+        Gear ratio: 6.2
+        Own weight (g): 285
+        Maximum drag force (kg): 12
+        PE (No.-m) : 2.5-300, 3-210
+        Bearing (ball / roller): 6/1'
         ],
         [
-        'product_id' => 2,
-        'specs_name' => 'Gear ratio',
-        'specs_value' => '6.2'
+        'product_id' => 7,
+        'specification' => 
+        '20 TAMS LT2500
+        Max Drag : 10kg
+        Braid Line Capacity : (#PE/m): #0.8/200
+        Gear Ratio : 5.3:1
+        Water : Salt Water
+        Ball Bearing : 6BB + 1RB
+        Line Per Handle Turn : 75cm
+        Weight : 230g',
         ],
 
         [
-        'product_id' => 2,
-        'specs_name' => 'Own weight (g)',
-        'specs_value' => '285'
-        ],
-        [
-        'product_id' => 2,
-        'specs_name' => 'Maximum drag force (kg)',
-        'specs_value' => '12'
-        ],
-        [
-        'product_id' => 2,
-        'specs_name' => 'PE (No.-m)',
-        'specs_value' => ' 2.5-300, 3-210'
-        ],
-        [
-        'product_id' => 2,
-        'specs_name' => 'Bearing (ball / roller)',
-        'specs_value' => '6/1'
-        ],
-        [
-        'product_id' => 7,
-        'specs_name' => 'PE (No.-m)',
-        'specs_value' => '6/1'
-        ],
-        [
-        'product_id' => 7,
-        'specs_name' => 'Own weight (g)',
-        'specs_value' => '6/1'
-        ],
-        [
-        'product_id' => 7,
-        'specs_name' => 'Gear ratio',
-        'specs_value' => '6/1'
-        ],
-        [
         'product_id' => 8,
-        'specs_name' => 'Own weight (g)',
-        'specs_value' => '6/1'
-        ],
-        [
-        'product_id' => 8,
-        'specs_name' => 'Bearing (ball / roller)',
-        'specs_value' => '6/1'
-        ],
-        [
-        'product_id' => 8,
-        'specs_name' => 'Weight',
-        'specs_value' => '6/1'
-        ],
-        [
-        'product_id' => 8,
-        'specs_name' => 'Ball Bearing',
-        'specs_value' => '6/1'
+        'specification' => 
+        'Max Drag : 10kg
+        Braid Line Capacity : (#PE/m): #1.5/200
+        Gear Ratio : 5.2:1
+        Water : Salt Water
+        Ball Bearing : 6BB + 1RB
+        Line Per Handle Turn : 82cm
+        Weight : 275g',
         ],
         [
         'product_id' => 13,
-        'specs_name' => 'Length',
-        'specs_value' => '7ft6in/1'
-        ],
-        [
-        'product_id' => 13,
-        'specs_name' => 'Section',
-        'specs_value' => '2 pc'
-        ],
-        [
-        'product_id' => 13,
-        'specs_name' => 'Lure Weight',
-        'specs_value' => '50-120g'
+        'specification' => 
+        'Length: 7ft6in
+        Section: 2 pc
+        Lure Weight: 50-120g
+        Line: pe 6-7
+        Max Drag: 8kg'
         ],
         [
         'product_id' => 14,
-        'specs_name' => 'Length',
-        'specs_value' => '6ft'
-        ],
-        [
-        'product_id' => 14,
-        'specs_name' => 'Jig Max',
-        'specs_value' => '400g'
-        ],
-        [
-        'product_id' => 14,
-        'specs_name' => 'Line',
-        'specs_value' => 'PE 2-4'
-        ],
+        'specification' => 
+        'EBESJ II - B602MH Overhead Rod
+        Length: 6ft
+        Jig Max: 400g
+        Line: PE 2-4
+        Section: 2
+        Test: 18kg'
+        ]
     ]);
     }
 }

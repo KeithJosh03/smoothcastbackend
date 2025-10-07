@@ -22,8 +22,7 @@ class SpecificationController extends Controller {
     public function store(Request $request) {
         $validated = $request->validate([
             'product_id' => ['required','exists:products,product_id'],
-            'specs_name' => ['required','string','max:255'],
-            'specs_value' => ['required','string','max:255']
+            'specification' => ['required','string']
         ]);
         $specs = Specification::create($validated);
             return response()->json([

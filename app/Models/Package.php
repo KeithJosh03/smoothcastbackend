@@ -6,16 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 
-class ProductImage extends Model {
+class Package extends Model {
+    protected $primaryKey = 'package_id';
     public $timestamps = false;
-    protected $primaryKey = 'product_img_id';
     protected $fillable = [
     'variant_id',
-    'url',
-    'isMain'
+    'setup_id'
     ];
 
-    public function productvariants(): BelongsTo {
+    public function packagevariant(): BelongsTo {
         return $this->belongsTo(ProductVariant::class,'variant_id');
+    }
+
+    public function setup(): BelongsTo {
+        return $this->belongsTo(Setup::class,'setup_id');
     }
 }

@@ -27,6 +27,9 @@ return new class extends Migration {
             $table->decimal('base_price',10,2);
             $table->text('description')
                 ->nullable();
+            $table->timestamp('release')
+                ->useCurrent()
+                ->nullable();
         });
     }
     public function down(): void {

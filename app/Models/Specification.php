@@ -10,8 +10,7 @@ class Specification extends Model {
     protected $primaryKey = 'specs_id';
     protected $fillable = [
     'product_id',
-    'specs_name',
-    'specs_value'
+    'specification',
     ];
 
     public function products(): BelongsTo {

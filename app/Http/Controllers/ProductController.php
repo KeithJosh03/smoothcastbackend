@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
+use App\Http\Resources\ProductDetailsResource;
+use App\Http\Resources\ProductSearchResource;
+use App\Http\Resources\ProductDetailInitialResource;
+
+
 class ProductController extends Controller {
     public function index(){
         $products = Product::all();
@@ -25,7 +30,9 @@ class ProductController extends Controller {
             'type_id' => ['nullable', 'exists:category_types,type_id'],
             'product_name' => ['required','string','max:100'],
             'base_price' => ['required','decimal:10,2'],
-            'description' => ['nullable','string']
+            'description' => ['nullable','string'],
+            'release' => ['nullable', 'date'],
+
         ]);
         $product = Product::create($validated);
 
@@ -53,12 +60,14 @@ class ProductController extends Controller {
     }
 
     public function productSpecificDetail ($productId) {
-        $productdetail = Product::with([
-                        'brand',
-                        'specification',
-                        'features',
-                        'productVariant.allImage',
-                        'categorytype'
+        $productdetail = Product::select('product_id','product_name','base_price','description', 'type_id', 'brand_id')
+                        ->with([
+                        'brand:brand_id,brand_name',
+                        'specification:product_id,specification',
+                        'features:product_id,features',
+                        'productVariant:product_id,variant_id,full_model_name,product_price',
+                        'productVariant.allImage:product_img_id,variant_id,url,isMain',
+                        'categorytype:type_id,type_name'
                         ])
                         ->where('product_id', $productId)
                         ->first();
@@ -68,11 +77,35 @@ class ProductController extends Controller {
                 'productdetail' => null
             ]);
         }
+
         return response()->json([
             'status' => true,
-            'productdetail' => $productdetail
+            'productdetail' => new ProductDetailsResource($productdetail)
         ]);
     }
+
+    public function productDetailInitial ($productId) {
+        $productdetail = Product::select('product_id','product_name')
+                        ->with([
+                        'firstVariant:product_id,variant_id,product_price'
+                        ])
+                        ->where('product_id', $productId)
+                        ->first();
+        if(!$productdetail) {
+            return response()->json([
+                'status' => true,
+                'productdetail' => null
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'productdetail' => new ProductDetailInitialResource($productdetail)
+        ]);
+    }
+
+
+
 
     public function productSearch ($productname) {
         $products = Product::where('product_name','LIKE','%'. $productname . '%')
@@ -86,8 +119,18 @@ class ProductController extends Controller {
         }
         return response()->json([
             'status' => true,
-            'products' => $products
+            'products' => ProductSearchResource::collection($products)
         ]);
 
+    }
+
+
+    public function newArrivals() {
+        $products = Product::newArrivals()->get();
+
+        return response()->json([
+            'status' => true,
+            'products' => $products
+        ]);
     }
 }
