@@ -60,6 +60,7 @@ class CategoryController extends Controller {
                 $query->select('product_id','product_name','category_id','brand_id','base_price','type_id')
                     ->with([
                         'brand:brand_id,brand_name',
+                        'productVariant.product.categorytype',
                         'productVariant' => function ($q) {
                             $q->select('variant_id','product_id','full_model_name','product_price')
                                 ->with([
@@ -74,6 +75,7 @@ class CategoryController extends Controller {
         return response()->json([
             'status' => true,
             'collectioncategories' => new CategoryCollectionResource($categories)
+            // 'collectioncategories' => $categories
         ]);
     }
 

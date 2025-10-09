@@ -15,16 +15,12 @@ class SetupController extends Controller {
             'status' => true,
             'setups' => SetupResource::collection($setups)
         ]);
-
     }
 
     public function create() {
     
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request) {
     
         //
@@ -68,8 +64,8 @@ class SetupController extends Controller {
         'package:variant_id,package_id,setup_id',
         'inclusionSetup:setup_id,inclusion',
         'mainImageSetup:setup_id,url',
-        'package.packagevariant:variant_id,product_id,full_model_name',
-        'package.packagevariant.product:product_id,type_id,product_name',
+        'package.packagevariant:variant_id,product_price,product_id,full_model_name',
+        'package.packagevariant.product:product_id,category_id,type_id,product_name',
         'package.packagevariant.product.categorytype:type_id,type_name'
         ])
         ->get();

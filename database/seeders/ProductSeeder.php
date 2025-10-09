@@ -15,7 +15,7 @@ class ProductSeeder extends Seeder {
             'category_id' => 1,
             'type_id' => 1, 
             'product_name' => 'Daiwa 18 EXIST G LT 3000 CXH',
-            'base_price' => 27000.00,
+            'base_price' => 27000.50,
             'description' =>  "DAIWA has held the same dream for 60 years. To bring to the world, the finest designed reel ever seen. A reel that is so light and easy to use that it feels like an extension of your body. A reel that is so strong that it will withstand the toughest conditions an angler and the environment can throw at it. The dream to create a reel that turns the contradiction of being LIGHT yet TOUGH on its head.
 
 Now, after a long history of innovation, and endless challenges, that dream has become a reality. 2018 NEW EXIST. Here, for the anglers of the world, is a reel like we've never seen before. A reel designed for ultimate performance, joy and angling perfection."
@@ -24,7 +24,7 @@ Now, after a long history of innovation, and endless challenges, that dream has 
             'brand_id' => 1,
             'category_id' => 1,
             'type_id' => 3,
-            'base_price' => 10600.00,
+            'base_price' => 10600.50,
             'product_name' => '18 BLAST LT5000D-CXH',
             'description' => null
             ],
@@ -153,7 +153,7 @@ Now, after a long history of innovation, and endless challenges, that dream has 
             'category_id' => 4,
             'type_id' => 11,
             'base_price' => 65.00,
-            'product_name' => "Mebao Accessory Box MBE1-103L/203L/309L",
+            'product_name' => "Mebao Accessory Box MBE1",
             'description' => "A multifunctional Bait and Accessory Box Made of thickened PP material that comes in 3 different configuration for the anglers preference. Its has a large capacity size of 175 x 105 x 36mm hat is very convenient to place on backpacks or tackle boxes."
             ],
             [

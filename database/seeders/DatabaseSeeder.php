@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder {
             PackageSeeder::class,
             InclusionSeeder::class,
             SetupImageSeeder::class,
-
+            ProductDiscountSeeder::class
         ]);
     }
 }

@@ -21,6 +21,18 @@ class PackageSeeder extends Seeder {
         'variant_id' => 18,
         'setup_id' => 1,
         ],
+        [
+        'variant_id' => 4,
+        'setup_id' => 2,
+        ],
+        [
+        'variant_id' => 15,
+        'setup_id' => 2,
+        ],
+        [
+        'variant_id' => 24,
+        'setup_id' => 2,
+        ]
      ]);
     }
 }

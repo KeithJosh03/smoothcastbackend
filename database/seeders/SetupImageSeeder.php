@@ -13,6 +13,11 @@ class SetupImageSeeder extends Seeder {
             'setup_id' => 1,
             'url' => '/mmd1.jpg',
             'isMain' => 1 
+            ],
+            [
+            'setup_id' => 2,
+            'url' => '/mmd1.jpg',
+            'isMain' => 1 
             ]
         ]);
     }   

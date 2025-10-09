@@ -12,12 +12,12 @@ class ProductVariantSeeder extends Seeder {
             [
             'product_id' => 1,
             'full_model_name' => "Daiwa 18 EXIST G LT 3000 CXH",
-            'product_price' => 27000.00
+            'product_price' => 27000.50
             ],
             [
             'product_id' => 2,
             'full_model_name' => "18 BLAST LT5000D-CXH",
-            'product_price' => 10600.00
+            'product_price' => 10600.50
             ],
             [
             'product_id' => 3,

@@ -14,9 +14,7 @@ use App\Http\Controllers\PackageController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\SetupImageController;
-
-
-
+use App\Http\Controllers\ProductDiscountController;
 
 
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
@@ -32,7 +30,7 @@ Route::get('/products/productdetail/{productId}', [ProductController::class, 'pr
 Route::get('/products/productsearch/{productname}', [ProductController::class, 'productSearch']);
 
 Route::get('/setups/setupcollection/', [SetupController::class, 'setupcollection']);
-
+Route::get('/productDiscounted/collection', [ProductDiscountController::class,'discountedProductCollection']);
 
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('productimage', ProductImageController::class);
@@ -42,7 +40,7 @@ Route::apiResource('productvariant',ProductVariantController::class);
 Route::apiResource('features', FeatureController::class);
 Route::apiResource('specifications', SpecificationController::class);
 Route::apiResource('packages', PackageController::class);
-
+Route::apiResource('productDiscounted', ProductDiscountController::class);
 Route::apiResource('categorytypes', CategoryTypeController::class);
 Route::apiResource('setups', SetupController::class);
 Route::apiResource('inclusions', InclusionController::class);

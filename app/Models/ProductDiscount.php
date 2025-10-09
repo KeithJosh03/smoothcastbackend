@@ -17,7 +17,7 @@ class ProductDiscount extends Model {
     ];
     
 
-    public function products(): BelongsTo {
+    public function discountProductVariant(): BelongsTo {
         return $this->belongsTo(ProductVariant::class,'variant_id');
     }
 }
