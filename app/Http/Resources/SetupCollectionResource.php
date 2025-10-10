@@ -7,9 +7,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class SetupCollectionResource extends  JsonResource {
     public function toArray($request) {
-        $totalProductPrice = $this->package->sum(function ($package) {
+        $totalProductPrice = strval($this->package->sum(function ($package) {
             return $package->packagevariant->product_price ?? 0;
-        });
+        }));
         return [
             'setupId'        => $this->setup_id,
             'setupName'      => $this->setup_name,

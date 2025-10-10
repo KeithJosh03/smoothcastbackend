@@ -24,8 +24,8 @@ class ProductVariant extends Model {
         return $this->hasMany(ProductImage::class,'variant_id');
     }
 
-    public function discounts(): HasMany {
-        return $this->hasMany(ProductDiscount::class,'variant_id');
+    public function discountsVariant(): HasMany {
+        return $this->hasMany(ProductDiscount::class,'variant_id')->valid();
     }
     
     public function mainImage() {
@@ -40,5 +40,4 @@ class ProductVariant extends Model {
     public function package(): HasMany {
         return $this->hasMany(Package::class,'variant_id');
     }
-
 }

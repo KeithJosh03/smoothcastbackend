@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\ProductDiscount;
 use Illuminate\Http\Request;
 use App\Http\Resources\ProductDiscountCollectionResource;
@@ -58,21 +59,22 @@ class ProductDiscountController extends Controller {
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ProductDiscount $productDiscount)
-    {
-        //
+    public function destroy(ProductDiscount $productDiscount) {
+    
     }
 
     public function discountedProductCollection() {
-        $discountedProduct = ProductDiscount::select('discount_id', 'variant_id','discount_type','discount_value')
-        ->with([
-        'discountProductVariant:variant_id,product_id,full_model_name,product_price',
-        'discountProductVariant.mainImage:variant_id,url',
-        'discountProductVariant.product.brand'
-        ])
-        ->take(4)
-        ->get();
-
+        $now = Carbon::now();
+        $discountedProduct = ProductDiscount::select('discount_id', 'variant_id', 'discount_type', 'discount_value', 'endDate')
+            ->with([
+                'discountProductVariant:variant_id,product_id,full_model_name,product_price',
+                'discountProductVariant.mainImage:variant_id,url',
+                'discountProductVariant.product.brand'
+            ])
+            ->where('startDate', '<=', $now)
+            ->where('endDate', '>=', $now)
+            ->take(4)
+            ->get();
         return response()->json([
             'status' => true,
             'collectioncategories' => ProductDiscountCollectionResource::collection($discountedProduct)

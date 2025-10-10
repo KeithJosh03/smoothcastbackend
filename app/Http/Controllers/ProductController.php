@@ -67,7 +67,8 @@ class ProductController extends Controller {
                         'features:product_id,features',
                         'productVariant:product_id,variant_id,full_model_name,product_price',
                         'productVariant.allImage:product_img_id,variant_id,url,isMain',
-                        'categorytype:type_id,type_name'
+                        'categorytype:type_id,type_name',
+                        'productVariant.discountsVariant:variant_id,endDate,discount_type,discount_value'
                         ])
                         ->where('product_id', $productId)
                         ->first();
@@ -81,6 +82,7 @@ class ProductController extends Controller {
         return response()->json([
             'status' => true,
             'productdetail' => new ProductDetailsResource($productdetail)
+            // 'productdetail' => $productdetail
         ]);
     }
 

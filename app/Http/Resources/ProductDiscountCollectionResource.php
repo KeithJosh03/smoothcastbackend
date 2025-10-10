@@ -10,6 +10,7 @@ class ProductDiscountCollectionResource extends  JsonResource {
         return [
             'discountId'   => $this->discount_id,
             'variantId' => $this->variant_id,
+            'endDate' => $this->endDate,
             'productId' => $this->discountProductVariant->product->product_id,
             'discountType'  => $this->discount_type,
             'discountValue'  => $this->discount_value,

@@ -22,6 +22,9 @@ class ProductDetailsResource extends JsonResource {
                     'variantId' => $variant->variant_id,
                     'name'       => $variant->full_model_name,
                     'price'      => $variant->product_price,
+                    'discountPrice' => $variant->discountsVariant->first()?->discount_value ?? null,
+                    'discountType' => $variant->discountsVariant->first()?->discount_type ?? null,
+                    'discountEnd' => $variant->discountsVariant->first()?->endDate ?? null,
                     'allImage'  => $variant->allImage->map(function ($img) {
                         return [
                             'productimageId' => $img->product_img_id,
