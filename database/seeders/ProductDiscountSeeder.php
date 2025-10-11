@@ -22,6 +22,13 @@ class ProductDiscountSeeder extends Seeder {
             'endDate' => '2025-12-30',
             'discount_type' => 'Percent',
             'discount_value' => 20
+            ],
+            [
+            'variant_id' => 24,
+            'startDate' => '2025-10-09',
+            'endDate' => '2025-12-30',
+            'discount_type' => 'Percent',
+            'discount_value' => 10
             ]
         ]);
     }
