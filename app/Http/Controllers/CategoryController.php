@@ -75,7 +75,6 @@ class CategoryController extends Controller {
         return response()->json([
             'status' => true,
             'collectioncategories' => new CategoryCollectionResource($categories)
-            // 'collectioncategories' => $categories
         ]);
     }
 

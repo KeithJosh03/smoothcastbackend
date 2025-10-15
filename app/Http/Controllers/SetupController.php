@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Setup;
 use Illuminate\Http\Request;
-use App\Http\Resources\SetupResource;
+
+use App\Http\Resources\SetupDetailsResource;
 use App\Http\Resources\SetupCollectionResource;
 
 class SetupController extends Controller {
@@ -31,7 +32,7 @@ class SetupController extends Controller {
      */
     public function show(Setup $setup)
     {
-        //
+
     }
 
     /**
@@ -75,4 +76,31 @@ class SetupController extends Controller {
             'setupcollection' => SetupCollectionResource::collection($setupcollection)
         ]);
     }
+
+
+    public function specificSetup($setupId) {
+        $setupDetail = Setup::select('setup_id','setup_name','code_name','description','start_date','end_date','value_discount','type_discount')
+            ->with([
+            'setupimages:setup_id,url,isMain,setup_img_id',
+            'package:variant_id,package_id,setup_id',
+            'package.packagevariant:variant_id,full_model_name,product_id,product_price',
+            'package.packagevariant.product:product_id,type_id',
+            'package.packagevariant.product.categorytype:type_id,type_name'
+            ])
+            ->where('setup_id', $setupId)
+            ->first();
+
+        if (!$setupDetail || $setupDetail->package->isEmpty()) {
+            return response()->json([
+                'status' => true,
+                'setupDetail' => []
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'setupDetail' => new SetupDetailsResource($setupDetail) 
+        ]);
+    }
+
 }

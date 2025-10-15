@@ -17,7 +17,8 @@ class ProductDiscountCollectionResource extends  JsonResource {
             'productModel' => $this->discountProductVariant->full_model_name,
             'productPrice' => $this->discountProductVariant->product_price,
             'imageThumbNail' => $this->discountProductVariant->mainImage->url,
-            'brandName' => $this->discountProductVariant->product->brand->brand_name
+            'brandName' => $this->discountProductVariant->product->brand->brand_name,
+            'productName' => $this->discountProductVariant->product->product_name
         ];
     }
 }

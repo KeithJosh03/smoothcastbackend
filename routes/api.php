@@ -30,7 +30,13 @@ Route::get('/products/productdetail/{productId}', [ProductController::class, 'pr
 Route::get('/products/productsearch/{productname}', [ProductController::class, 'productSearch']);
 
 Route::get('/setups/setupcollection/', [SetupController::class, 'setupcollection']);
+Route::get('/setups/specificSetup/{setupId}', [SetupController::class, 'specificSetup']);
+
 Route::get('/productDiscounted/collection', [ProductDiscountController::class,'discountedProductCollection']);
+
+
+
+
 
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('productimage', ProductImageController::class);
