@@ -24,10 +24,6 @@ class Setup extends Model {
         return $this->hasMany(Package::class,'setup_id');
     }
 
-    public function inclusionSetup(): HasOne {
-        return $this->hasOne(Inclusion::class,'setup_id');
-    }
-
     public function setupimages(): HasMany {
         return $this->hasMany(SetupImage::class,'setup_id');
     }

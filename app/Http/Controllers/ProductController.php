@@ -31,8 +31,9 @@ class ProductController extends Controller {
             'product_name' => ['required','string','max:100'],
             'base_price' => ['required','decimal:10,2'],
             'description' => ['nullable','string'],
+            'features' => ['required','string'],
+            'specifications' => ['required','string'],
             'release' => ['nullable', 'date'],
-
         ]);
         $product = Product::create($validated);
 
@@ -63,12 +64,10 @@ class ProductController extends Controller {
         $productdetail = Product::select('product_id','product_name','base_price','description', 'type_id', 'brand_id')
                         ->with([
                         'brand:brand_id,brand_name',
-                        'specification:product_id,specification',
-                        'features:product_id,features',
-                        'productVariant:product_id,variant_id,full_model_name,product_price',
-                        'productVariant.allImage:product_img_id,variant_id,url,isMain',
+                        'productVariants:product_id,variant_id,full_model_name,product_price',
+                        'productVariants.allImage:product_img_id,variant_id,url,isMain',
                         'categorytype:type_id,type_name',
-                        'productVariant.discountsVariant:variant_id,endDate,discount_type,discount_value'
+                        'productVariants.discountsVariants:variant_id,endDate,discount_type,discount_value'
                         ])
                         ->where('product_id', $productId)
                         ->first();
@@ -83,6 +82,7 @@ class ProductController extends Controller {
             'status' => true,
             'productdetail' => new ProductDetailsResource($productdetail)
             // 'productdetail' => $productdetail
+
         ]);
     }
 

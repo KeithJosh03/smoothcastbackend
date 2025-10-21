@@ -16,15 +16,16 @@ class ProductDetailsResource extends JsonResource {
             'features'       => $this->features->features ?? null,
             'description'    => $this->description ?? null, 
             'typeName'       => $this->categorytype->type_name,
-            'productVariant' => $this->productVariant->map(function ($variant) {
+            'productVariant' => $this->productVariants->map(function ($variant) {
+                $discount = $variant->discountsVariants->first();
                 return [
                     'productId' => $variant->product_id,
                     'variantId' => $variant->variant_id,
                     'name'       => $variant->full_model_name,
                     'price'      => $variant->product_price,
-                    'discountPrice' => $variant->discountsVariant->first()?->discount_value ?? null,
-                    'discountType' => $variant->discountsVariant->first()?->discount_type ?? null,
-                    'discountEnd' => $variant->discountsVariant->first()?->endDate ?? null,
+                    'discountPrice' => $discount ? $discount->discount_value : null,
+                    'discountType' => $discount ? $discount->discount_type : null,   
+                    'discountEnd' => $discount ? $discount->endDate : null,          
                     'allImage'  => $variant->allImage->map(function ($img) {
                         return [
                             'productimageId' => $img->product_img_id,
@@ -37,4 +38,5 @@ class ProductDetailsResource extends JsonResource {
             }),
         ];
     }
+
 }

@@ -30,6 +30,10 @@ return new class extends Migration {
             $table->timestamp('release')
                 ->useCurrent()
                 ->nullable();
+            $table->text('features')
+                ->nullable();
+            $table->text('specifications')
+                ->nullable();
         });
     }
     public function down(): void {

@@ -65,20 +65,51 @@ class ProductDiscountController extends Controller {
 
     public function discountedProductCollection() {
         $now = Carbon::now();
+        
         $discountedProduct = ProductDiscount::select('discount_id', 'variant_id', 'discount_type', 'discount_value', 'endDate')
-            ->with([
-                'discountProductVariant:variant_id,product_id,full_model_name,product_price',
-                'discountProductVariant.mainImage:variant_id,url',
-                'discountProductVariant.product.brand'
-            ])
-            ->where('startDate', '<=', $now)
-            ->where('endDate', '>=', $now)
-            ->take(4)
-            ->get();
+        ->with([
+            'discountProductVariant:variant_id,product_id,full_model_name,product_price',
+            'discountProductVariant.mainImage:variant_id,url',
+            'discountProductVariant.product.brand',
+            'discountProductVariant.product.productVariants',
+            'discountProductVariant.product.productVariants.mainImage:variant_id,url'
+        ])
+        ->where('startDate', '<=', $now)
+        ->where('endDate', '>=', $now)
+        ->take(4)
+        ->get();
+
         return response()->json([
             'status' => true,
             'collectioncategories' => ProductDiscountCollectionResource::collection($discountedProduct)
         ]);
     }
+    
+    public function discountedProducts(Request $request) {
+        $now = Carbon::now();
+        $perPage = 12; // Products per page
+        $page = $request->get('page', 1);
+        
+        $discountedProduct = ProductDiscount::select('discount_id', 'variant_id', 'discount_type', 'discount_value', 'endDate')
+        ->with([
+            'discountProductVariant:variant_id,product_id,full_model_name,product_price',
+            'discountProductVariant.mainImage:variant_id,url',
+            'discountProductVariant.product.brand',
+            'discountProductVariant.product.productVariants',
+            'discountProductVariant.product.productVariants.mainImage:variant_id,url'
+        ])
+        ->where('startDate', '<=', $now)
+        ->where('endDate', '>=', $now)
+        ->paginate($perPage, ['*'], 'page', $page);
 
+        return response()->json([
+            'status' => true,
+            'products' => ProductDiscountCollectionResource::collection($discountedProduct->items()),
+            'currentPage' => $discountedProduct->currentPage(),
+            'lastPage' => $discountedProduct->lastPage(),
+            'hasMore' => $discountedProduct->hasMorePages()
+        ]);
+    }
+
+    
 }

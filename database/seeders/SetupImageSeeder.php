@@ -11,12 +11,12 @@ class SetupImageSeeder extends Seeder {
         DB::table('setup_images')->insert([
             [
             'setup_id' => 1,
-            'url' => '/mmd1.jpg',
+            'url' => 'mmd1.jpg',
             'isMain' => 1 
             ],
             [
             'setup_id' => 2,
-            'url' => '/mmd1.jpg',
+            'url' => 'mmd1.jpg',
             'isMain' => 1 
             ]
         ]);

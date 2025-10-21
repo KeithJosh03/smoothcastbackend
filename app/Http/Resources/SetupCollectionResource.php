@@ -16,7 +16,6 @@ class SetupCollectionResource extends  JsonResource {
             'valueDiscount'  => $this->value_discount,
             'codeName'       => $this->code_name,
             'typeDiscount'   => $this->type_discount,
-            'inclusion'      => $this->inclusionSetup->inclusion ?? null,
             'setupImageThumbNail' => $this->mainImageSetup->url ?? null,
             'totalProductPrice' => $totalProductPrice,
             'packages' => $this->package->map(function ($package) {

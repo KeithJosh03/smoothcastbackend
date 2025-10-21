@@ -15,6 +15,7 @@ use App\Http\Controllers\SetupController;
 use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\SetupImageController;
 use App\Http\Controllers\ProductDiscountController;
+use App\Http\Controllers\AuthController;
 
 
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
@@ -30,13 +31,16 @@ Route::get('/products/productdetail/{productId}', [ProductController::class, 'pr
 Route::get('/products/productsearch/{productname}', [ProductController::class, 'productSearch']);
 
 Route::get('/setups/setupcollection/', [SetupController::class, 'setupcollection']);
+Route::get('/setups/setupShowcase/', [SetupController::class, 'setups']);
 Route::get('/setups/specificSetup/{setupId}', [SetupController::class, 'specificSetup']);
 
 Route::get('/productDiscounted/collection', [ProductDiscountController::class,'discountedProductCollection']);
+Route::get('/productDiscounted/discountedProducts', [ProductDiscountController::class,'discountedProducts']);
 
 
 
-
+Route::post('login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
 
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('productimage', ProductImageController::class);

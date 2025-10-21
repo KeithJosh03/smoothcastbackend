@@ -60,11 +60,12 @@ class CategoryController extends Controller {
                 $query->select('product_id','product_name','category_id','brand_id','base_price','type_id')
                     ->with([
                         'brand:brand_id,brand_name',
-                        'productVariant.product.categorytype',
-                        'productVariant' => function ($q) {
+                        'productVariants.product.categorytype',
+                        'productVariants' => function ($q) {
                             $q->select('variant_id','product_id','full_model_name','product_price')
                                 ->with([
-                                    'mainImage:product_img_id,variant_id,url,isMain'
+                                    'mainImage:product_img_id,variant_id,url,isMain',
+                                    'discountsVariants:variant_id,discount_type,discount_value'
                                 ]);
                         }
                 ])->take(4);
@@ -78,26 +79,56 @@ class CategoryController extends Controller {
         ]);
     }
 
-    public function specificCategory($categoryname) {
-        $category = Category::with([
-            'products:product_id,category_id,type_id,brand_id,product_name,base_price',
-            'products.brand:brand_name,brand_id',
-            'products.categorytype:type_id,type_name',
-            'products.productVariant.mainImage'
+    public function specificCategory($categoryname, Request $request) {
+        $perPage = 12; 
+        $page = $request->get('page', 1);
+        
+        $category = Category::where('category_name', $categoryname)->first();
+        
+        if (!$category) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Category not found'
+            ], 404);
+        }
+        
+        $products = $category->products()
+            ->with([
+                'brand:brand_name,brand_id',
+                'categorytype:type_id,type_name',
+                'productVariants:variant_id,product_id,full_model_name,product_price',
+                'productVariants.mainImage:variant_id,url',
+                'productVariants.discountsVariants:variant_id,discount_type,discount_value'
             ])
-            ->where('category_name', $categoryname)
-            ->first();
+            ->paginate($perPage, ['*'], 'page', $page);
 
-        if (!$category || $category->products->isEmpty()) {
+        if ($products->isEmpty()) {
             return response()->json([
                 'status' => true,
-                'categoryproducts' => []
+                'categoryproducts' => [
+                    'categoryId' => $category->category_id,
+                    'categoryName' => $category->category_name,
+                    'products' => []
+                ],
+                'currentPage' => 1,
+                'lastPage' => 1,
+                'hasMore' => false
             ]);
         }
 
         return response()->json([
             'status' => true,
-            'categoryproducts' => new SpecificCategoryProductResource($category) 
+            'categoryproducts' => [
+                'categoryId' => $category->category_id,
+                'categoryName' => $category->category_name,
+                'products' => SpecificCategoryProductResource::collection($products->items())
+            ],
+            'currentPage' => $products->currentPage(),
+            'lastPage' => $products->lastPage(),
+            'hasMore' => $products->hasMorePages()
         ]);
     }
 }
+
+
+

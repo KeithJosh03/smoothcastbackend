@@ -12,15 +12,13 @@ class DatabaseSeeder extends Seeder {
             CategorySeeder::class,
             CategoryTypesSeeder::class,
             ProductSeeder::class,
-            SpecificationSeeder::class,
-            FeatureSeeder::class,
             ProductVariantSeeder::class,
             ProductImageSeeder::class,
             SetupSeeder::class,
             PackageSeeder::class,
-            InclusionSeeder::class,
             SetupImageSeeder::class,
             ProductDiscountSeeder::class
         ]);
     }
+
 }

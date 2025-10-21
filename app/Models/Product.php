@@ -18,6 +18,8 @@ class Product extends Model {
     'product_name',
     'base_price',
     'description',
+    'features',
+    'specifications',
     'release'
     ];
 
@@ -29,7 +31,7 @@ class Product extends Model {
         return $this->belongsTo(Category::class,'category_id');
     }
 
-    public function productVariant(): HasMany {
+    public function productVariants(): HasMany {
         return $this->hasMany(ProductVariant::class, 'product_id', 'product_id');
     }
 
@@ -41,13 +43,4 @@ class Product extends Model {
     public function categorytype(): BelongsTo {
         return $this->belongsTo(CategoryType::class,'type_id');
     }
-
-    public function specification(): HasOne {
-        return $this->hasOne(Specification::class, 'product_id', 'product_id');
-    }
-    
-    public function features(): HasOne {
-        return $this->hasOne(Feature::class, 'product_id', 'product_id');
-    }
-
 }

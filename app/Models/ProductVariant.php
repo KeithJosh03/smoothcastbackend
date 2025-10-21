@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
 
 
 class ProductVariant extends Model {
@@ -23,8 +25,8 @@ class ProductVariant extends Model {
     public function productimage(): HasMany {
         return $this->hasMany(ProductImage::class,'variant_id');
     }
-
-    public function discountsVariant(): HasMany {
+    
+    public function discountsVariants(): HasMany {
         return $this->hasMany(ProductDiscount::class,'variant_id')->valid();
     }
     
@@ -41,3 +43,5 @@ class ProductVariant extends Model {
         return $this->hasMany(Package::class,'variant_id');
     }
 }
+
+

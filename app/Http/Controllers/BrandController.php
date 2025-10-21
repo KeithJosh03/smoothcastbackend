@@ -55,15 +55,36 @@ class BrandController extends Controller {
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function specificbrand($brandname) {
-        $brandproducts = Brand::where('brand_name', $brandname)
-            ->with(['brandProducts.categorytype','brandProducts.productVariant.mainImage']) 
-            ->first(); 
+    public function specificbrand($brandname, Request $request) {
+        $perPage = 12; // Products per page
+        $page = $request->get('page', 1);
+        
+        $brand = Brand::where('brand_name', $brandname)->first();
+        
+        if (!$brand) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Brand not found'
+            ], 404);
+        }
+        
+        $brandproducts = $brand->brandProducts()
+            ->with([
+                'categorytype:type_name,type_id',
+                'productVariants:product_id,variant_id,full_model_name,product_price',
+                'productVariants.discountsVariants:variant_id,discount_type,discount_value',
+                'productVariants.mainImage:variant_id,url',
+            ])
+            ->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'status' => true,
-            'brandImage' => $brandproducts->image_url,
-            'products' => BrandSpecificProducts::collection($brandproducts->brandProducts)
+            'brandImage' => $brand->image_url,
+            'brandId' => $brand->brand_id,
+            'products' => BrandSpecificProducts::collection($brandproducts->items()),
+            'currentPage' => $brandproducts->currentPage(),
+            'lastPage' => $brandproducts->lastPage(),
+            'hasMore' => $brandproducts->hasMorePages()
         ]);
     }
 

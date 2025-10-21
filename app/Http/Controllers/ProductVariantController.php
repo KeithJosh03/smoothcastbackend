@@ -20,7 +20,18 @@ class ProductVariantController extends Controller {
     }
 
     public function store(Request $request) {
-    
+        $validated = $request->validate([
+            'product_id' => ['nullable', 'exists:products,product_id'],
+            'full_model_name' => ['required','string','max:200'],
+            'product_price' => ['required','decimal:10,2']
+        ]);
+        $productvariant = ProductVariant::create($validated);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Product created successfully',
+            'product' => $productvariant
+        ], 201);
     }
 
     public function show(ProductVariant $productVariant) {
