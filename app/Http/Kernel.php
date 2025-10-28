@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Fruitcake\Cors\HandleCors;
 
 class Kernel extends HttpKernel
 {
@@ -12,7 +13,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        // Global HTTP middleware
+    \Fruitcake\Cors\HandleCors::class,
     ];
 
     /**
@@ -26,7 +27,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, // <-- This line
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, // <-- Added for stateful auth (useful for cookies)
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],

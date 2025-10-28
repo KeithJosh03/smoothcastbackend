@@ -7,16 +7,16 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration{
     
     public function up(): void{
-        Schema::create('category_types', function (Blueprint $table) {
-            $table->id('type_id');
+        Schema::create('sub_categories', function (Blueprint $table) {
+            $table->id('sub_category_id');
             $table->foreignId('category_id')
                 ->constrained('categories','category_id')
                 ->onDelete('cascade');
-            $table->string('type_name',100);
+            $table->string('sub_category_name',100);
         });
     }
     public function down(): void{
     
-        Schema::dropIfExists('category_types');
+        Schema::dropIfExists('sub_category');
     }
 };

@@ -5,7 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-
     public function up(): void {
         Schema::create('products', function (Blueprint $table) {
             $table->id('product_id');
@@ -14,9 +13,9 @@ return new class extends Migration {
                 ->constrained('categories', 'category_id')
                 ->onDelete('cascade');
             $table
-                ->foreignId('type_id')
+                ->foreignId('sub_category_id')
                 ->nullable()
-                ->constrained('category_types', 'type_id')
+                ->constrained('sub_categories', 'sub_category_id')
                 ->onDelete('cascade');
             $table
                 ->foreignId('brand_id')

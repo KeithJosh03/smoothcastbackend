@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
-class AuthController extends Controller {
-    public function login(Request $request) {
-    
+class AuthController extends Controller
+{
+    public function login(Request $request)
+    {
         // Validate login data
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
@@ -28,22 +28,12 @@ class AuthController extends Controller {
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
-        // Create token for the admin
+        // Generate token
         $token = $admin->createToken('AdminPanel')->plainTextToken;
 
         return response()->json([
             'admin' => $admin,
             'token' => $token,
         ]);
-    }
-
-    public function logout(Request $request) {
-    
-        // Revoke the admin's token
-        $request->user()->tokens->each(function ($token) {
-            $token->delete();
-        });
-
-        return response()->json(['message' => 'Successfully logged out']);
     }
 }

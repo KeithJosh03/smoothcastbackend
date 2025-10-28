@@ -31,7 +31,7 @@ class ProductImageSeeder extends Seeder {
             ],
             [
             'variant_id' => 4,
-            'url' => 'daiwaseabog500mj0a.jpg',
+            'url' => 'daiwaseabog500mj0a.jpeg',
             'isMain' => true
             ],
             [

@@ -14,7 +14,7 @@ class Product extends Model {
     protected $fillable = [
     'brand_id',
     'category_id',
-    'type_id',
+    'sub_category_id',
     'product_name',
     'base_price',
     'description',
@@ -40,7 +40,11 @@ class Product extends Model {
                     ->orderBy('variant_id');
     }
 
-    public function categorytype(): BelongsTo {
-        return $this->belongsTo(CategoryType::class,'type_id');
+    public function subcategory(): BelongsTo {
+        return $this->belongsTo(SubCategory::class,'sub_category_id');
+    }
+
+    public function scopeLatestArrivals($query) {
+        return $query->orderBy('release', 'desc')->limit(8);
     }
 }

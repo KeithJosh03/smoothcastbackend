@@ -8,6 +8,7 @@ use Illuminate\Http\Response;
 
 use App\Http\Resources\CategoryCollectionResource;
 use App\Http\Resources\CategoryResource;
+use App\Http\Resources\CategorySubResource;
 use App\Http\Resources\SpecificCategoryProductResource;
 
 class CategoryController extends Controller {
@@ -24,12 +25,15 @@ class CategoryController extends Controller {
     
     }
 
-    public function store(Request $request){
-        $validate = $request->validate([
-            'category_name' => ['required','string','max:100']
+    public function store(Request $request) {
+        $validated = $request->validate([
+            'category_name' => ['required', 'string', 'max:100']
         ]);
-        $categories = Category::insert($validate);
-        return response()->json($categories, Response::HTTP_CREATED);
+
+        $category = Category::create([
+            'category_name' => $validated['category_name']
+        ]);
+        return response()->json(new CategoryResource($category), Response::HTTP_CREATED);
     }
 
     public function show(Category $category){
@@ -37,15 +41,16 @@ class CategoryController extends Controller {
     }
 
     public function edit(Category $category){
-        
     }
 
     public function update(Request $request, Category $category){
         $validated = $request->validate([
             'category_name' => ['required','string','max:100'],
         ]);
+
         $category->update($validated);
-        return response()->json($category);
+
+        return response()->json(new CategoryResource($category));
     }
 
     public function destroy(Category $category){
@@ -128,6 +133,25 @@ class CategoryController extends Controller {
             'hasMore' => $products->hasMorePages()
         ]);
     }
+
+    public function categorySub($categoryId) {
+        $category = Category::where('category_id', $categoryId)
+                            ->with('subcategories:category_id,sub_category_id,sub_category_name')
+                            ->first();
+
+        if(!$category) {
+            return response()->json([
+                'status' => true,
+                'category' => null 
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'categorySub' => new CategorySubResource($category) 
+        ]);
+    }
+
 }
 
 

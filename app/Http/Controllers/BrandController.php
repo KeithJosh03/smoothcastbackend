@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 use App\Http\Resources\BrandSpecificProducts;
 use App\Http\Resources\BrandResource;
@@ -24,13 +26,28 @@ class BrandController extends Controller {
 
     }
 
-    public function store(Request $request){
+    public function store(Request $request) {
         $validated = $request->validate([
-        'brand_name' => ['required','string','max:100'],
-        'image_url' => ['nullable','string','max:100']
+            'brand_name' => ['required', 'string', 'max:100'],
+            'image_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
         ]);
-        $brand = Brand::insert($validated);
-        return response()->json($brand, Response::HTTP_CREATED);
+
+        if ($request->hasFile('image_url')) {
+            $image = $request->file('image_url');
+            $imageExtension = $image->getClientOriginalExtension();
+            $imageName = Str::random(40) . '.' . $imageExtension;
+
+            $imagePath = $image->storeAs('brands', $imageName, 'public');
+            $validated['image_url'] = Storage::url($imagePath); 
+        }
+
+        $brand = Brand::create($validated);
+
+        return response()->json([
+            'brandId' => $brand->brand_id,
+            'brandName' => $brand->brand_name, 
+            'imageUrl' => $brand->image_url,
+        ], Response::HTTP_CREATED);
     }
 
     public function show(Brand $brand){
@@ -41,14 +58,29 @@ class BrandController extends Controller {
 
     }
 
-    public function update(Request $request, Brand $brand){
+    public function update(Request $request, Brand $brand) {
         $validated = $request->validate([
-        'brand_name' => ['required','string','max:100'],
+            'brand_name' => ['required', 'string', 'max:100'],
+            'image_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
         ]);
-        
+
+        if ($request->hasFile('image_url')) {
+            if ($brand->image_url) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $brand->image_url));
+            }
+            $image = $request->file('image_url');
+            $imageExtension = $image->getClientOriginalExtension();
+            $imageName = Str::random(40) . '.' . $imageExtension;
+            $imagePath = $image->storeAs('brands', $imageName, 'public');
+            $validated['image_url'] = Storage::url($imagePath);
+        }
+
         $brand->update($validated);
-        return response()->json($brand);
+        return response()->json(new BrandResource($brand));
     }
+
+
+
 
     public function destroy(Brand $brand){
         $brand->delete();

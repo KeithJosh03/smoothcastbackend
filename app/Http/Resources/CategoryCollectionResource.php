@@ -31,8 +31,8 @@ class CategoryCollectionResource extends ResourceCollection {
                         'categoryType' => optional($firstVariant?->product?->categorytype)?->type_name,
                         'brandName'   => $p->brand->brand_name,
                         'productName' => $p->product_name,
-                        'url'         => $imageUrl,
-                        'discount'    => $discountedVariant?->discountsVariants?->first()?->discount_type ?? null
+                        'imageThumbNail' => $imageUrl,
+                        'discountType'    => $discountedVariant?->discountsVariants?->first()?->discount_type ?? null
                     ];
                 }),
             ];

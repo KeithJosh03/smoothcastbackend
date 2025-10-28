@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 use App\Http\Resources\ProductDetailsResource;
 use App\Http\Resources\ProductSearchResource;
 use App\Http\Resources\ProductDetailInitialResource;
-
+use App\Http\Resources\NewArrivalResource;
 
 class ProductController extends Controller {
     public function index(){
@@ -27,7 +28,7 @@ class ProductController extends Controller {
         $validated = $request->validate([
             'brand_id' => ['nullable', 'exists:brands,brand_id'],
             'category_id' => ['required', 'exists:categories,category_id'],
-            'type_id' => ['nullable', 'exists:category_types,type_id'],
+            'sub_category_id' => ['nullable', 'exists:sub_category,sub_category_id'],
             'product_name' => ['required','string','max:100'],
             'base_price' => ['required','decimal:10,2'],
             'description' => ['nullable','string'],
@@ -81,8 +82,6 @@ class ProductController extends Controller {
         return response()->json([
             'status' => true,
             'productdetail' => new ProductDetailsResource($productdetail)
-            // 'productdetail' => $productdetail
-
         ]);
     }
 
@@ -108,7 +107,6 @@ class ProductController extends Controller {
 
 
 
-
     public function productSearch ($productname) {
         $products = Product::where('product_name','LIKE','%'. $productname . '%')
                     ->select('product_id','product_name')
@@ -125,14 +123,21 @@ class ProductController extends Controller {
         ]);
 
     }
-
-
+    
     public function newArrivals() {
-        $products = Product::newArrivals()->get();
-
+        $products = Product::latestArrivals()
+        ->select('product_id','type_id','brand_id','product_name','base_price')
+        ->with([
+        'categorytype:type_id,type_name',
+        'brand:brand_name,brand_id',
+        'productVariants.mainImage:variant_id,url',
+        'productVariants.discountsVariants:variant_id,discount_type,discount_value'
+        ])
+        ->limit(10)
+        ->get();
         return response()->json([
             'status' => true,
-            'products' => $products
+            'products' => NewArrivalResource::collection($products)
         ]);
     }
 }

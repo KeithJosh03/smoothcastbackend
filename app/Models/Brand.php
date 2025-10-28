@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Brand extends Model{
 
-    public $timestamps = false;
+    public $timestamps = true;
     protected $primaryKey = 'brand_id';
     protected $fillable = [
     'brand_name',

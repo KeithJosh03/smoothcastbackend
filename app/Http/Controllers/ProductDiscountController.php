@@ -66,9 +66,10 @@ class ProductDiscountController extends Controller {
     public function discountedProductCollection() {
         $now = Carbon::now();
         
-        $discountedProduct = ProductDiscount::select('discount_id', 'variant_id', 'discount_type', 'discount_value', 'endDate')
+        $discountedProduct = ProductDiscount::select('discount_id','variant_id', 'discount_type', 'discount_value','startDate','endDate')
         ->with([
             'discountProductVariant:variant_id,product_id,full_model_name,product_price',
+            'discountProductVariant:product:product_id,product_name',
             'discountProductVariant.mainImage:variant_id,url',
             'discountProductVariant.product.brand',
             'discountProductVariant.product.productVariants',
