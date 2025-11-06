@@ -13,7 +13,7 @@ use App\Http\Resources\NewArrivalResource;
 
 class ProductController extends Controller {
     public function index(){
-        $products = Product::all();
+        $products = Product::paginate(15);
         return response()->json([
             'status' => true,
             'products' => $products
@@ -25,27 +25,63 @@ class ProductController extends Controller {
     }
 
     public function store(Request $request){
+        dd($request->all());
+
+        $request->merge([
+        'category_id' => (int)$request->category_id,
+        'sub_category_id' => (int)$request->sub_category_id,
+        'brand_id' => (int)$request->brand_id,
+        ]);
+
         $validated = $request->validate([
             'brand_id' => ['nullable', 'exists:brands,brand_id'],
             'category_id' => ['required', 'exists:categories,category_id'],
-            'sub_category_id' => ['nullable', 'exists:sub_category,sub_category_id'],
-            'product_name' => ['required','string','max:100'],
-            'base_price' => ['required','decimal:10,2'],
-            'description' => ['nullable','string'],
-            'features' => ['required','string'],
-            'specifications' => ['required','string'],
-            'release' => ['nullable', 'date'],
+            'sub_category_id' => ['nullable', 'exists:sub_categories,sub_category_id'],
+            'product_name' => ['required', 'string', 'max:100'],
+            'base_price' => ['required', 'numeric', 'min:0'],
+            'description' => ['nullable', 'string'],
+            'features' => ['nullable','string'],
+            'specifications' => ['nullable','string'],
+            // 'release' => ['nullable', 'date'],
+            // 'productVariants' => ['nullable', 'array'],
+            // 'productVariants.*.variantName' => ['required', 'string'],
+            // 'productVariants.*.variantPrice' => ['required', 'numeric'],
+            // 'productVariants.*.discount' => ['nullable', 'array'],
+            // 'productVariants.*.discount.startDate' => ['nullable', 'date'],
+            // 'productVariants.*.discount.endDate' => ['nullable', 'date'],
+            // 'productVariants.*.discount.discountType' => ['nullable', 'string'],
+            // 'productVariants.*.discount.discountValue' => ['nullable', 'numeric'],
+            // 'productVariants.*.variantImages' => ['nullable', 'array'],
+            // 'productVariants.*.variantImages.*.url' => ['nullable', 'url'],
+            // 'productVariants.*.variantImages.*.isMain' => ['nullable', 'boolean'],
         ]);
-        $product = Product::create($validated);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Product created successfully',
-            'product' => $product
-        ], 201);
+
+        // $compressedDescription = gzcompress($validated['description'] ?? null);
+        // $compressedFeatures = gzcompress($validated['features'] ?? null);
+        // $compressedSpecifications = gzcompress($validated['specifications'] ?? null);
+
+        // $product = Product::create([
+        //         'brand_id' => $validated['brand_id'],
+        //         'category_id' => $validated['category_id'],
+        //         'sub_category_id' => $validated['sub_category_id'],
+        //         'product_name' => $validated['product_name'],
+        //         'base_price' => $validated['base_price'],
+        //         'description' => $compressedDescription,
+        //         'features' => $compressedFeatures,
+        //         'specifications' => $compressedSpecifications,
+        //         'release' => $validated['release'],
+        // ]);
+
+        // if (isset($validated['variants']) && count($validated['variants']) > 0) {
+        //     dd($validated['variants']);
+        // }
+
     }
 
+
     public function show(Product $product){
+        dd($product);
         return $product;
     }
 
@@ -99,7 +135,7 @@ class ProductController extends Controller {
             ]);
         }
 
-        return response()->json([
+    return response()->json([
             'status' => true,
             'productdetail' => new ProductDetailInitialResource($productdetail)
         ]);

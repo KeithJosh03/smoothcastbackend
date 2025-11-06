@@ -18,6 +18,11 @@ class ProductVariant extends Model {
     'product_price'
     ];
     
+    protected $casts = [
+        'product_price' => 'decimal:2',
+    ];
+
+
     public function product(): BelongsTo {
         return $this->belongsTo(Product::class,'product_id');
     }

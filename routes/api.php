@@ -43,6 +43,9 @@ Route::get('/productDiscounted/discountedProducts', [ProductDiscountController::
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
 
+
+Route::post('products',[ProductController::class,'store']);
+
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('productimage', ProductImageController::class);
 Route::apiResource('categories', CategoryController::class);

@@ -11,18 +11,21 @@ return new class extends Migration {
             $table
                 ->foreignId('category_id')
                 ->constrained('categories', 'category_id')
-                ->onDelete('cascade');
+                ->onDelete('cascade')
+                ->index();
             $table
                 ->foreignId('sub_category_id')
                 ->nullable()
                 ->constrained('sub_categories', 'sub_category_id')
-                ->onDelete('cascade');
+                ->onDelete('cascade')
+                ->index();;
             $table
                 ->foreignId('brand_id')
                 ->nullable()
                 ->constrained('brands','brand_id')
-                ->onDelete('cascade');
-            $table->string('product_name', 100);
+                ->onDelete('cascade')
+                ->index();;
+            $table->string('product_name', 100)->unique();
             $table->decimal('base_price',10,2);
             $table->text('description')
                 ->nullable();
