@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProductVariant;
+use App\Models\ProductVariantType;
 use Illuminate\Http\Request;
 
-class ProductVariantController extends Controller {
+class ProductVariantTypeController extends Controller {
 
     public function index() {
         $variants = ProductVariant::all();
@@ -22,8 +22,7 @@ class ProductVariantController extends Controller {
     public function store(Request $request) {
         $validated = $request->validate([
             'product_id' => ['nullable', 'exists:products,product_id'],
-            'full_model_name' => ['required','string','max:200'],
-            'product_price' => ['required','decimal:10,2']
+            'variant_type_name' => ['required','string','max:200']
         ]);
         $productvariant = ProductVariant::create($validated);
 

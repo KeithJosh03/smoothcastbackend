@@ -3,8 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductMediaImage;
+use App\Models\ProductVariantType;
+use App\Models\VariantOptions;
+
+
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB; 
 
 use App\Http\Resources\ProductDetailsResource;
 use App\Http\Resources\ProductSearchResource;
@@ -13,7 +20,8 @@ use App\Http\Resources\NewArrivalResource;
 
 class ProductController extends Controller {
     public function index(){
-        $products = Product::paginate(15);
+        // $products = Product::paginate(15);
+        $products = Product::get();
         return response()->json([
             'status' => true,
             'products' => $products
@@ -24,60 +32,112 @@ class ProductController extends Controller {
     
     }
 
-    public function store(Request $request){
-        dd($request->all());
-
-        $request->merge([
-        'category_id' => (int)$request->category_id,
-        'sub_category_id' => (int)$request->sub_category_id,
-        'brand_id' => (int)$request->brand_id,
-        ]);
-
+    public function store(Request $request) {
         $validated = $request->validate([
             'brand_id' => ['nullable', 'exists:brands,brand_id'],
             'category_id' => ['required', 'exists:categories,category_id'],
             'sub_category_id' => ['nullable', 'exists:sub_categories,sub_category_id'],
-            'product_name' => ['required', 'string', 'max:100'],
+            'product_title' => ['required', 'string', 'max:100'],
             'base_price' => ['required', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
-            'features' => ['nullable','string'],
-            'specifications' => ['nullable','string'],
-            // 'release' => ['nullable', 'date'],
-            // 'productVariants' => ['nullable', 'array'],
-            // 'productVariants.*.variantName' => ['required', 'string'],
-            // 'productVariants.*.variantPrice' => ['required', 'numeric'],
-            // 'productVariants.*.discount' => ['nullable', 'array'],
-            // 'productVariants.*.discount.startDate' => ['nullable', 'date'],
-            // 'productVariants.*.discount.endDate' => ['nullable', 'date'],
-            // 'productVariants.*.discount.discountType' => ['nullable', 'string'],
-            // 'productVariants.*.discount.discountValue' => ['nullable', 'numeric'],
-            // 'productVariants.*.variantImages' => ['nullable', 'array'],
-            // 'productVariants.*.variantImages.*.url' => ['nullable', 'url'],
-            // 'productVariants.*.variantImages.*.isMain' => ['nullable', 'boolean'],
+            'features' => ['nullable', 'string'],
+            'specifications' => ['nullable', 'string'],
+
+            'medias' => ['nullable', 'array'],
+            'medias.*.isMain' => ['required', 'boolean'],  
+            'medias.*.url' => ['required', 'string'],
+
+            'variants' => ['nullable', 'array'],
+            'variants.*.variantTypeName' => ['required_with:variants', 'string'],
+            'variants.*.variantOptions' => ['required_with:variants', 'array'],
+
+            'variants.*.variantOptions.*.price_adjustment' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'variants.*.variantOptions.*.variantOptionValue' => [
+                'required_with:variants.*.variantOptions',
+                'string'
+            ],
+
+            'variants.*.variantOptions.*.variant_image' => [
+                'required_with:variants.*.variantOptions',
+                'string'
+            ],
         ]);
 
+        // Step 2: Start a database transaction
+        DB::beginTransaction();
+        try {
+            // Step 3: Create the product
+            $product = Product::create([
+                'brand_id' => $validated['brand_id'] ?? null,
+                'category_id' => $validated['category_id'],
+                'sub_category_id' => $validated['sub_category_id'] ?? null,
+                'product_title' => $validated['product_title'],
+                'base_price' => $validated['base_price'],
+                'description' => $validated['description'] ?: null,
+                'features' => $validated['features'] ?: null,
+                'specifications' => $validated['specifications'] ?: null,
+                'release_date' => now(),
+            ]);
 
-        // $compressedDescription = gzcompress($validated['description'] ?? null);
-        // $compressedFeatures = gzcompress($validated['features'] ?? null);
-        // $compressedSpecifications = gzcompress($validated['specifications'] ?? null);
+            // Step 4: Handle media (product images)
+            if (!empty($validated['medias'])) {
+                foreach ($validated['medias'] as $media) {
+                    // Store the media URL and whether it's the main image
+                    ProductMediaImage::create([
+                        'product_id' => $product->product_id,
+                        'url' => $media['url'],
+                        'isMain' => $media['isMain'],
+                    ]);
+                }
+            }
 
-        // $product = Product::create([
-        //         'brand_id' => $validated['brand_id'],
-        //         'category_id' => $validated['category_id'],
-        //         'sub_category_id' => $validated['sub_category_id'],
-        //         'product_name' => $validated['product_name'],
-        //         'base_price' => $validated['base_price'],
-        //         'description' => $compressedDescription,
-        //         'features' => $compressedFeatures,
-        //         'specifications' => $compressedSpecifications,
-        //         'release' => $validated['release'],
-        // ]);
+            // Step 5: Handle product variants (optional)
+            if (!empty($validated['variants'])) {
+                foreach ($validated['variants'] as $variant) {
 
-        // if (isset($validated['variants']) && count($validated['variants']) > 0) {
-        //     dd($validated['variants']);
-        // }
+                    // Create Variant Type
+                    $variantType = ProductVariantType::create([
+                        'product_id' => $product->product_id,
+                        'variant_type_name' => $variant['variantTypeName'],
+                    ]);
 
+                    // Create Variant Options
+                    foreach ($variant['variantOptions'] as $option) {
+                        $variantType->variantOptions()->create([
+                            'variant_option_value' => $option['variantOptionValue'],
+                            'price_adjustment' => $option['price_adjustment'],
+                            'image_url' => $option['variant_image'],
+                        ]);
+                    }
+                }
+            }
+
+            // Step 6: Commit the transaction if everything is successful
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Product created successfully',
+                'product' => $product,
+            ], 201);
+        } catch (\Exception $e) {
+            // Step 7: Rollback if anything fails
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to create product: ' . $e->getMessage(),
+            ], 500);
+        }
     }
+
+
+
 
 
     public function show(Product $product){
@@ -98,12 +158,12 @@ class ProductController extends Controller {
     }
 
     public function productSpecificDetail ($productId) {
-        $productdetail = Product::select('product_id','product_name','base_price','description', 'type_id', 'brand_id')
+        $productdetail = Product::select('product_id','product_name','base_price','description','features','specifications','sub_category_id', 'brand_id')
                         ->with([
                         'brand:brand_id,brand_name',
-                        'productVariants:product_id,variant_id,full_model_name,product_price',
+                        'productVariants:product_id,variant_id,variant_name,variant_price',
                         'productVariants.allImage:product_img_id,variant_id,url,isMain',
-                        'categorytype:type_id,type_name',
+                        'subcategory:sub_category_id,sub_category_name',
                         'productVariants.discountsVariants:variant_id,endDate,discount_type,discount_value'
                         ])
                         ->where('product_id', $productId)
@@ -124,7 +184,7 @@ class ProductController extends Controller {
     public function productDetailInitial ($productId) {
         $productdetail = Product::select('product_id','product_name')
                         ->with([
-                        'firstVariant:product_id,variant_id,product_price'
+                        'firstVariant:product_id,variant_id,variant_price'
                         ])
                         ->where('product_id', $productId)
                         ->first();

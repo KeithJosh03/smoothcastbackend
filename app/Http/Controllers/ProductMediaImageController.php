@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProductImage;
+use App\Models\ProductMediaImage;
 use Illuminate\Http\Request;
 
-class ProductImageController extends Controller {
+class PProductMediaImageController extends Controller {
 
     public function index() {
         $productimage = ProductImage::all();
@@ -19,9 +19,8 @@ class ProductImageController extends Controller {
     
     }
 
-    public function store(Request $request)
-    {
-        //
+    public function store(Request $request) {
+    
     }
 
     /**

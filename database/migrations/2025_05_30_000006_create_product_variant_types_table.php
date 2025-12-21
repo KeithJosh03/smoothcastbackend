@@ -7,17 +7,16 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
 
     public function up(): void {
-        Schema::create('product_variants', function (Blueprint $table) {
-            $table->id('variant_id');
+        Schema::create('product_variant_types', function (Blueprint $table) {
+            $table->id('variant_type_id');
             $table
                 ->foreignId('product_id')
                 ->constrained('products','product_id')
                 ->onDelete('cascade');
-            $table->string('full_model_name',200);
-            $table->decimal('product_price',10,2);
+            $table->string('variant_type_name',200);
         });
     }
     public function down(): void {
-        Schema::dropIfExists('product_variants');
+        Schema::dropIfExists('product_variant_types');
     }
 };

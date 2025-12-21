@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Category extends Model{
+class Category extends Model {
 
     public $timestamps = false;
     protected $primaryKey = 'category_id';
@@ -17,7 +17,7 @@ class Category extends Model{
         return $this->hasMany(Product::class,'category_id');
     }
 
-    public function subcategories(): HasMany {
+    public function subCategories(): HasMany {
         return $this->hasMany(SubCategory::class,'category_id');
     }
 }

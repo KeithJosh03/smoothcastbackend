@@ -12,17 +12,17 @@ class ProductDetailsResource extends JsonResource {
             'productName'    => $this->product_name,
             'basePrice'      => $this->base_price,
             'brandName'      => $this->brand->brand_name ?? null,
-            'specification'  => $this->specification->specification ?? null,
-            'features'       => $this->features->features ?? null,
+            'specification'  => $this->specifications ?? null,
+            'features'       => $this->features ?? null,
             'description'    => $this->description ?? null, 
-            'typeName'       => $this->categorytype->type_name,
+            'subCategoryName'       => $this->subcategory->sub_category_name,
             'productVariant' => $this->productVariants->map(function ($variant) {
                 $discount = $variant->discountsVariants->first();
                 return [
                     'productId' => $variant->product_id,
                     'variantId' => $variant->variant_id,
-                    'name'       => $variant->full_model_name,
-                    'price'      => $variant->product_price,
+                    'variantName'       => $variant->variant_name,
+                    'price'      => $variant->variant_price,
                     'discountPrice' => $discount ? $discount->discount_value : null,
                     'discountType' => $discount ? $discount->discount_type : null,   
                     'discountEnd' => $discount ? $discount->endDate : null,          

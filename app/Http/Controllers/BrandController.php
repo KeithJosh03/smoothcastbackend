@@ -28,18 +28,9 @@ class BrandController extends Controller {
 
     public function store(Request $request) {
         $validated = $request->validate([
-            'brand_name' => ['required', 'string', 'max:100'],
-            'image_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'brand_name' => ['required', 'string', 'max:255'],
+            'image_url' => ['required', 'string'],
         ]);
-
-        if ($request->hasFile('image_url')) {
-            $image = $request->file('image_url');
-            $imageExtension = $image->getClientOriginalExtension();
-            $imageName = Str::random(40) . '.' . $imageExtension;
-
-            $imagePath = $image->storeAs('brands', $imageName, 'public');
-            $validated['image_url'] = Storage::url($imagePath); 
-        }
 
         $brand = Brand::create($validated);
 
@@ -61,19 +52,9 @@ class BrandController extends Controller {
     public function update(Request $request, Brand $brand) {
         $validated = $request->validate([
             'brand_name' => ['required', 'string', 'max:100'],
-            'image_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'image_url' => ['required','string'],
         ]);
 
-        if ($request->hasFile('image_url')) {
-            if ($brand->image_url) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $brand->image_url));
-            }
-            $image = $request->file('image_url');
-            $imageExtension = $image->getClientOriginalExtension();
-            $imageName = Str::random(40) . '.' . $imageExtension;
-            $imagePath = $image->storeAs('brands', $imageName, 'public');
-            $validated['image_url'] = Storage::url($imagePath);
-        }
 
         $brand->update($validated);
         return response()->json(new BrandResource($brand));

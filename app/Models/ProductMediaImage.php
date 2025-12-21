@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class SetupImage extends Model {
+
+class ProductMediaImage extends Model {
     public $timestamps = false;
-    protected $primaryKey = 'setup_img_id';
+    protected $primaryKey = 'product_img_id';
     protected $fillable = [
-    'setup_id',
+    'product_id',
     'url',
     'isMain'
     ];
 
-    public function setup(): BelongsTo {
-        return $this->belongsTo(Setup::class,'setup_id');
+    public function product(): BelongsTo {
+        return $this->belongsTo(ProductVariant::class,'product_id');
     }
 }

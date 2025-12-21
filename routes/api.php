@@ -16,15 +16,22 @@ use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\SetupImageController;
 use App\Http\Controllers\ProductDiscountController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ImageUploadController;
+
+
+Route::post('/imageupload/uploads',[ImageUploadController::class,'upload']);
 
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
 Route::get('/brands/brandlogo/', [BrandController::class, 'brandLogo']);
+
 Route::get('/brands/headerbrand/', [BrandController::class, 'headerBrand']);
 Route::put('/brands/{brand}', [BrandController::class, 'update']);
 
 Route::get('/categories/specificCategory/{categoryname}', [CategoryController::class, 'specificCategory']);
 Route::get('/categories/categorycollection',[CategoryController::class, 'categoryproductcollection']);
 Route::get('/categories/categorysub/{categoryId}', [CategoryController::class, 'categorySub']);
+
+Route::get('/categories/SubCatByCategoryId/{categoryId}',[CategoryController::class,'subCatByCategoryId']);
 
 
 Route::get('/products/productsearchinitial/{productname}', [ProductController::class, 'productDetailInitial']);
@@ -44,7 +51,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
 
 
-Route::post('products',[ProductController::class,'store']);
+Route::post('products/store',[ProductController::class,'store']);
 
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('productimage', ProductImageController::class);
