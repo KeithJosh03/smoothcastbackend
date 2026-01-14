@@ -43,11 +43,16 @@ class Product extends Model {
         return $this->hasOne(ProductMediaImage::class,'product_id')
                 ->where('isMain', 1);
     }
-// Validate
+    
     public function productTypeVariant(): HasMany {
         return $this->hasMany(ProductVariantType::class, 'product_id', 'product_id');
     }
 
+
+    public function productTypeVariantFirst() {
+        return $this->hasOne(ProductVariantType::class, 'product_id', 'product_id')
+                    ->orderBy('variant_type_id');
+    }
 
 
     // public function productVariants(): HasMany {

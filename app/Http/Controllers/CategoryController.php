@@ -62,6 +62,8 @@ class CategoryController extends Controller {
 
     public function categoryproductcollection() {
         $categories = Category::select('category_id', 'category_name')
+
+
             ->with([
                 'products' => function ($query) {
                 $query->select('product_id', 'product_title', 'category_id', 'brand_id', 'base_price', 'sub_category_id')
@@ -84,55 +86,56 @@ class CategoryController extends Controller {
 
 
 
-    // public function specificCategory($categoryname, Request $request) {
-    //     $perPage = 12; 
-    //     $page = $request->get('page', 1);
+    public function specificCategory($categoryname, Request $request) {
+        $perPage = 15; 
+        $page = $request->get('page', 1);
         
-    //     $category = Category::where('category_name', $categoryname)->first();
+        $category = Category::where('category_name', $categoryname)->first();
         
-    //     if (!$category) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Category not found'
-    //         ], 404);
-    //     }
+        if (!$category) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Category not found'
+            ], 404);
+        }
         
-    //     $products = $category->products()
-    //         ->with([
-    //             'brand:brand_name,brand_id',
-    //             'categorytype:type_id,type_name',
-    //             'productVariants:variant_id,product_id,full_model_name,product_price',
-    //             'productVariants.mainImage:variant_id,url',
-    //             'productVariants.discountsVariants:variant_id,discount_type,discount_value'
-    //         ])
-    //         ->paginate($perPage, ['*'], 'page', $page);
+        $products = $category
+        ->products()
+        ->select('base_price','product_id','brand_id','sub_category_id','product_title')
+        ->with([
+            'brand:brand_id,brand_name',
+            'subCategories:sub_category_id,sub_category_name',
+            'productThumbNail:product_img_id,product_id,url',
+            'productTypeVariantFirst.variantOptionsFirstImage:variant_option_id,variant_type_id,image_url'
+        ])
+        ->paginate($perPage, ['*'], 'page', $page);
 
-    //     if ($products->isEmpty()) {
-    //         return response()->json([
-    //             'status' => true,
-    //             'categoryproducts' => [
-    //                 'categoryId' => $category->category_id,
-    //                 'categoryName' => $category->category_name,
-    //                 'products' => []
-    //             ],
-    //             'currentPage' => 1,
-    //             'lastPage' => 1,
-    //             'hasMore' => false
-    //         ]);
-    //     }
+        if ($products->isEmpty()) {
+            return response()->json([
+                'status' => true,
+                'categoryproducts' => [
+                    'categoryId' => $category->category_id,
+                    'categoryName' => $category->category_name,
+                    'products' => []
+                ],
+                'currentPage' => 1,
+                'lastPage' => 1,
+                'hasMore' => false
+            ]);
+        }
 
-    //     return response()->json([
-    //         'status' => true,
-    //         'categoryproducts' => [
-    //             'categoryId' => $category->category_id,
-    //             'categoryName' => $category->category_name,
-    //             'products' => SpecificCategoryProductResource::collection($products->items())
-    //         ],
-    //         'currentPage' => $products->currentPage(),
-    //         'lastPage' => $products->lastPage(),
-    //         'hasMore' => $products->hasMorePages()
-    //     ]);
-    // }
+        return response()->json([
+            'status' => true,
+            'categoryproducts' => [
+                'categoryId' => $category->category_id,
+                'categoryName' => $category->category_name,
+                'products' => SpecificCategoryProductResource::collection($products->items())
+            ],
+            'currentPage' => $products->currentPage(),
+            'lastPage' => $products->lastPage(),
+            'hasMore' => $products->hasMorePages()
+        ]);
+    }
 
     public function categorySub($categoryId) {
         $category = Category::where('category_id', $categoryId)

@@ -9,7 +9,7 @@ class ProductSearchResource extends JsonResource {
     public function toArray($request) {
         return [
             'productId'    => $this->product_id,
-            'productName'  => $this->product_name
+            'productTitle'  => $this->product_title
         ];
     }
 }

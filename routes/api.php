@@ -38,7 +38,10 @@ Route::get('/products/productsearchinitial/{productname}', [ProductController::c
 Route::get('/products/newarrival/', [ProductController::class, 'newArrivals']);
 
 Route::get('/products/productdetail/{productId}', [ProductController::class, 'productSpecificDetail']);
-Route::get('/products/productsearch/{productname}', [ProductController::class, 'productSearch']);
+
+Route::get('/products/productsearch', [ProductController::class, 'productSearch']);
+Route::get('/products/productlistdashboardsearch/', [ProductController::class, 'productListDashBoardSearch']);
+
 
 Route::get('/setups/setupcollection/', [SetupController::class, 'setupcollection']);
 Route::get('/setups/setupShowcase/', [SetupController::class, 'setups']);

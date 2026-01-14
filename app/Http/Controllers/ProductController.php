@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Resources\ProductDetailsResource;
 use App\Http\Resources\ProductSearchResource;
 use App\Http\Resources\ProductDetailInitialResource;
+use App\Http\Resources\productListDashBoardResource;
 use App\Http\Resources\NewArrivalResource;
 
 class ProductController extends Controller {
@@ -149,8 +150,25 @@ class ProductController extends Controller {
     
     }
 
-    public function update(Request $request, Product $product){
-    
+    public function update(Request $request, Product $product) {
+        $validated = $request->validate([
+            'brand_id'        => ['sometimes', 'nullable', 'exists:brands,brand_id'],
+            'category_id'     => ['sometimes', 'exists:categories,category_id'],
+            'sub_category_id' => ['sometimes', 'nullable', 'exists:sub_categories,sub_category_id'],
+            'product_title'   => ['sometimes', 'string', 'max:100'],
+            'base_price'      => ['sometimes', 'numeric', 'min:0'],
+            'description'     => ['sometimes', 'nullable', 'string'],
+            'features'        => ['sometimes', 'nullable', 'string'],
+            'specifications'  => ['sometimes', 'nullable', 'string'],
+        ]);
+
+        $product->update($validated);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Product updated successfully',
+            'product' => $product->fresh()
+        ]);
     }
 
     public function destroy(Product $product){
@@ -158,13 +176,15 @@ class ProductController extends Controller {
     }
 
     public function productSpecificDetail ($productId) {
-        $productdetail = Product::select('product_id','product_name','base_price','description','features','specifications','sub_category_id', 'brand_id')
+        $productdetail = Product::select('product_id','sub_category_id','category_id','brand_id','product_title','base_price','description','features','specifications')
                         ->with([
                         'brand:brand_id,brand_name',
-                        'productVariants:product_id,variant_id,variant_name,variant_price',
-                        'productVariants.allImage:product_img_id,variant_id,url,isMain',
-                        'subcategory:sub_category_id,sub_category_name',
-                        'productVariants.discountsVariants:variant_id,endDate,discount_type,discount_value'
+                        'productMediaImage',
+                        'subCategories:sub_category_name,sub_category_id',
+                        'category:category_id,category_name',
+                        'productMediaImage:product_id,url,isMain',
+                        'productTypeVariant:product_id,variant_type_id,variant_type_name',
+                        'productTypeVariant.variantOptions:variant_type_id,variant_option_id,image_url,variant_option_value,price_adjustment'
                         ])
                         ->where('product_id', $productId)
                         ->first();
@@ -181,44 +201,64 @@ class ProductController extends Controller {
         ]);
     }
 
-    public function productDetailInitial ($productId) {
-        $productdetail = Product::select('product_id','product_name')
-                        ->with([
-                        'firstVariant:product_id,variant_id,variant_price'
-                        ])
-                        ->where('product_id', $productId)
-                        ->first();
-        if(!$productdetail) {
-            return response()->json([
-                'status' => true,
-                'productdetail' => null
-            ]);
-        }
+    public function productSearch(Request $request) {
+        $productname = $request->query('productTitle');
+        $products = Product::whereRaw(
+                'LOWER(product_title) LIKE ?',
+                ['%' . strtolower($productname) . '%']
+            )
+            ->select('product_id', 'product_title')
+            ->get();
 
-    return response()->json([
-            'status' => true,
-            'productdetail' => new ProductDetailInitialResource($productdetail)
-        ]);
-    }
-
-
-
-    public function productSearch ($productname) {
-        $products = Product::where('product_name','LIKE','%'. $productname . '%')
-                    ->select('product_id','product_name')
-                    ->get();
-        if($products->isEmpty()){
-            return response()->json([
-            'status' => true,
-            'products' => []
-            ]);
-        }
         return response()->json([
             'status' => true,
             'products' => ProductSearchResource::collection($products)
         ]);
-
     }
+
+    public function productListDashBoardSearch(Request $request) {
+
+        $search = $request->query('productTitle');
+
+        $query = Product::query()
+            ->when($search, function ($q) use ($search) {
+                $q->whereRaw(
+                    'LOWER(product_title) LIKE ?',
+                    ['%' . strtolower($search) . '%']
+                );
+            })
+            ->select(
+                'product_id',
+                'product_title',
+                'base_price',
+                'category_id',
+                'sub_category_id',
+                'brand_id'
+            )
+            ->with([
+                'category:category_id,category_name',
+                'brand:brand_id,brand_name',
+                'subCategories:sub_category_id,sub_category_name',
+                'productThumbNail:product_id,url',
+                'productTypeVariant:product_id,variant_type_id,variant_type_name',
+                'productTypeVariant.variantOptionsFirstImage:variant_type_id,image_url',
+                'productTypeVariant.variantOptions:variant_type_id,price_adjustment,variant_option_value'
+            ])
+            ->orderBy('product_id', 'desc');
+
+        $products = $query->paginate(10);
+
+        return response()->json([
+            'status' => true,
+            'products' => ProductListDashBoardResource::collection($products),
+            'pagination' => [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'total' => $products->total(),
+            ],
+        ]);
+    }
+
     
     public function newArrivals() {
         $products = Product::latestArrivals()
@@ -236,4 +276,18 @@ class ProductController extends Controller {
             'products' => NewArrivalResource::collection($products)
         ]);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
