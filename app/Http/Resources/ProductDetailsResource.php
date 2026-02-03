@@ -9,23 +9,36 @@ class ProductDetailsResource extends JsonResource {
     public function toArray($request) {
         return [
             'productId'      => $this->product_id,
-            'productTitle'    => $this->product_title,
+            'productTitle'   => $this->product_title,
             'basePrice'      => $this->base_price,
-            'brandName'      => $this->brand->brand_name ?? null,
-            'specification'  => $this->specifications ?? null,
+            'specifications'  => $this->specifications ?? null,
             'features'       => $this->features ?? null,
             'description'    => $this->description ?? null, 
-            'subCategoryName'       => $this->subCategories->sub_category_name,
+            'subCategory'    => [
+                'subCategoryName' => $this->subCategories->sub_category_name,
+                'subCategoryId' => $this->subCategories->sub_category_id
+            ],
+            'category'    => [
+                'categoryName' => $this->category->category_name,
+                'categoryId' => $this->category->category_id
+            ],
+            'brand'      => [
+                'brandName' => $this->brand->brand_name, 
+                'brandId' => $this->brand->brand_id
+                ?? null
+            ],
             'productMedias' => $this->productMediaImage->isEmpty() ? null : 
                                 $this->productMediaImage->map(function ($media) {
                                     return [
+                                    'productImgId' => $media->product_img_id,
                                     'imageUrl' => $media->url,
                                     'isMain' => $media->isMain
                                     ];
                                 }), 
-            'productVariants' => $this->productTypeVariant->isEmpty() ? null :
+            'productVariantsTypes' => $this->productTypeVariant->isEmpty() ? null :
                         $this->productTypeVariant->map(function ($typeVariant) {
                             return [
+                            'variantTypeId' => $typeVariant->variant_type_id,
                             'variantTypeName' => $typeVariant->variant_type_name,
                             'variantOptions' => $typeVariant->variantOptions->map(function ($option) {
                                 return [

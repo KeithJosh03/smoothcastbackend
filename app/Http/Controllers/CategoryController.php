@@ -139,7 +139,7 @@ class CategoryController extends Controller {
 
     public function categorySub($categoryId) {
         $category = Category::where('category_id', $categoryId)
-                            ->with('subcategories:category_id,sub_category_id,sub_category_name')
+                            ->with('subCategories:category_id,sub_category_id,sub_category_name')
                             ->first();
 
         if(!$category) {
@@ -151,7 +151,9 @@ class CategoryController extends Controller {
 
         return response()->json([
             'status' => true,
-            'categorySub' => new CategorySubResource($category) 
+            'categorySubs' => CategorySubResource::collection($category->subCategories) 
+            // 'categorySub' => $category
+
         ]);
     }
 

@@ -50,13 +50,14 @@ class BrandController extends Controller {
     }
 
     public function update(Request $request, Brand $brand) {
+
         $validated = $request->validate([
-            'brand_name' => ['required', 'string', 'max:100'],
-            'image_url' => ['required','string'],
+            'brand_name' => ['sometimes', 'string', 'max:100'],
+            'image_url'  => ['sometimes', 'string'],
         ]);
 
-
         $brand->update($validated);
+
         return response()->json(new BrandResource($brand));
     }
 
@@ -117,7 +118,7 @@ class BrandController extends Controller {
         ]);
     }
 
-    public function headerBrand(){
+    public function BrandNameList(){
         $brands = Brand::all(['brand_id','brand_name']);
         return response()->json([
             'status' => true,

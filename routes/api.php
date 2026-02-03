@@ -21,35 +21,36 @@ use App\Http\Controllers\ImageUploadController;
 
 Route::post('/imageupload/uploads',[ImageUploadController::class,'upload']);
 
+// BRANDS API
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
 Route::get('/brands/brandlogo/', [BrandController::class, 'brandLogo']);
-
-Route::get('/brands/headerbrand/', [BrandController::class, 'headerBrand']);
+Route::get('/brands/brandNameList/', [BrandController::class, 'BrandNameList']);
 Route::put('/brands/{brand}', [BrandController::class, 'update']);
 
+// CATEGORIES API
 Route::get('/categories/specificCategory/{categoryname}', [CategoryController::class, 'specificCategory']);
 Route::get('/categories/categorycollection',[CategoryController::class, 'categoryproductcollection']);
 Route::get('/categories/categorysub/{categoryId}', [CategoryController::class, 'categorySub']);
-
 Route::get('/categories/SubCatByCategoryId/{categoryId}',[CategoryController::class,'subCatByCategoryId']);
 
-
+// PRODUCTS API
 Route::get('/products/productsearchinitial/{productname}', [ProductController::class, 'productDetailInitial']);
 Route::get('/products/newarrival/', [ProductController::class, 'newArrivals']);
-
 Route::get('/products/productdetail/{productId}', [ProductController::class, 'productSpecificDetail']);
-
+// Route::get('/products/productdetailDashboard/{productId}', [ProductController::class, 'ProductDetailsDashboard']);
+Route::get('/products/productdetailEditDashboard/{productId}', [ProductController::class, 'ProductDetailsEditDashboard']);
 Route::get('/products/productsearch', [ProductController::class, 'productSearch']);
 Route::get('/products/productlistdashboardsearch/', [ProductController::class, 'productListDashBoardSearch']);
 
 
-Route::get('/setups/setupcollection/', [SetupController::class, 'setupcollection']);
-Route::get('/setups/setupShowcase/', [SetupController::class, 'setups']);
-Route::get('/setups/specificSetup/{setupId}', [SetupController::class, 'specificSetup']);
+// Route::get('/setups/setupcollection/', [SetupController::class, 'setupcollection']);
+// Route::get('/setups/setupShowcase/', [SetupController::class, 'setups']);
+// Route::get('/setups/specificSetup/{setupId}', [SetupController::class, 'specificSetup']);
 
-Route::get('/productDiscounted/collection', [ProductDiscountController::class,'discountedProductCollection']);
-Route::get('/productDiscounted/discountedProducts', [ProductDiscountController::class,'discountedProducts']);
+// Route::get('/productDiscounted/collection', [ProductDiscountController::class,'discountedProductCollection']);
+// Route::get('/productDiscounted/discountedProducts', [ProductDiscountController::class,'discountedProducts']);
 
+// LOGIN API
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
 

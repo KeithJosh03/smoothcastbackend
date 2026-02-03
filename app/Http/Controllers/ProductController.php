@@ -259,6 +259,33 @@ class ProductController extends Controller {
         ]);
     }
 
+    public function ProductDetailsEditDashboard($productId) {
+        $productdetail = Product::select('product_id','sub_category_id','category_id','brand_id','product_title','base_price','description','features','specifications')
+                        ->with([
+                        'brand',
+                        'productMediaImage',
+                        'subCategories',
+                        'category',
+                        'productMediaImage',
+                        'productTypeVariant',
+                        'productTypeVariant.variantOptions'
+                        ])
+                        ->where('product_id', $productId)
+                        ->first();
+        if(!$productdetail) {
+            return response()->json([
+                'status' => true,
+                'productdetail' => null
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'productdetail' => new ProductDetailsResource($productdetail)
+            // 'productdetail' => $productdetail
+        ]);
+    }
+
     
     public function newArrivals() {
         $products = Product::latestArrivals()
@@ -276,6 +303,32 @@ class ProductController extends Controller {
             'products' => NewArrivalResource::collection($products)
         ]);
     }
+
+    // public function ProductDetailsDashboard($productId) {
+    //     $productdetail = Product::select('product_id','sub_category_id','category_id','brand_id','product_title','base_price','description','features','specifications')
+    //                     ->with([
+    //                     'brand',
+    //                     'productMediaImage',
+    //                     'subCategories',
+    //                     'category',
+    //                     'productMediaImage',
+    //                     'productTypeVariant',
+    //                     'productTypeVariant.variantOptions'
+    //                     ])
+    //                     ->where('product_id', $productId)
+    //                     ->first();
+    //     if(!$productdetail) {
+    //         return response()->json([
+    //             'status' => true,
+    //             'productdetail' => null
+    //         ]);
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'productdetail' => $productdetail
+    //     ]);
+    // }
 
 
 
