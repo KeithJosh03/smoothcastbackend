@@ -10,10 +10,7 @@ class BrandResource extends JsonResource {
         return [
             'brandId'   => $this->brand_id,
             'brandName' => $this->brand_name,
-            'imageUrl'  => $this->when(
-                !empty($this->image_url), 
-                $this->image_url
-            ),
+            'imageUrl'  => optional($this->image)->image_url,
         ];
     }
 }

@@ -13,9 +13,11 @@ use App\Http\Resources\CategorySubResource;
 use App\Http\Resources\SpecificCategoryProductResource;
 
 
-class CategoryController extends Controller {
+class CategoryController extends Controller
+{
 
-    public function index(){
+    public function index()
+    {
         $categories = Category::all();
         return response()->json([
             'status' => true,
@@ -23,11 +25,13 @@ class CategoryController extends Controller {
         ]);
     }
 
-    public function create(){
-    
+    public function create()
+    {
+
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validated = $request->validate([
             'category_name' => ['required', 'string', 'max:100']
         ]);
@@ -38,16 +42,19 @@ class CategoryController extends Controller {
         return response()->json(new CategoryResource($category), Response::HTTP_CREATED);
     }
 
-    public function show(Category $category){
+    public function show(Category $category)
+    {
         return $category;
     }
 
-    public function edit(Category $category){
+    public function edit(Category $category)
+    {
     }
 
-    public function update(Request $request, Category $category){
+    public function update(Request $request, Category $category)
+    {
         $validated = $request->validate([
-            'category_name' => ['required','string','max:100'],
+            'category_name' => ['required', 'string', 'max:100'],
         ]);
 
         $category->update($validated);
@@ -55,60 +62,68 @@ class CategoryController extends Controller {
         return response()->json(new CategoryResource($category));
     }
 
-    public function destroy(Category $category){
+    public function destroy(Category $category)
+    {
         $category->delete();
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function categoryproductcollection() {
+    public function categoryproductcollection()
+    {
         $categories = Category::select('category_id', 'category_name')
-
-
             ->with([
-                'products' => function ($query) {
-                $query->select('product_id', 'product_title', 'category_id', 'brand_id', 'base_price', 'sub_category_id')
-                    ->with([
-                        'brand:brand_id,brand_name',
-                        'subCategories:category_id,sub_category_id,sub_category_name',
-                        'productThumbNail:url,product_img_id,product_id',
-                        'productTypeVariant.variantOptionsFirstImage'
-                    ])->take(4);
-                }
-            ])
-            ->get(); 
+            'products' => function ($query) {
+            $query->select(
+                'product_id',
+                'product_title',
+                'category_id',
+                'brand_id',
+                'base_price',
+                'sub_category_id'
+            )
+                ->with([
+                    'brand:brand_id,brand_name',
+                    'subCategories:sub_category_id,sub_category_name',
+                    'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
+                    'productTypeVariant.firstVariantOption.images' // eager load variant option images
+                ])
+                ->take(4);
+        }
+        ])
+            ->get();
 
         return response()->json([
             'categories' => new CategoryCollectionResource($categories)
-            // 'categories' => $categories
         ]);
     }
 
 
 
 
-    public function specificCategory($categoryname, Request $request) {
-        $perPage = 15; 
+    public function specificCategory($categoryname, Request $request)
+    {
+        $perPage = 15;
         $page = $request->get('page', 1);
-        
+
         $category = Category::where('category_name', $categoryname)->first();
-        
+
         if (!$category) {
             return response()->json([
                 'status' => false,
                 'message' => 'Category not found'
             ], 404);
         }
-        
+
         $products = $category
-        ->products()
-        ->select('base_price','product_id','brand_id','sub_category_id','product_title')
-        ->with([
+            ->products()
+            ->select('base_price', 'product_id', 'brand_id', 'sub_category_id', 'product_title')
+            ->with([
             'brand:brand_id,brand_name',
             'subCategories:sub_category_id,sub_category_name',
             'productThumbNail:product_img_id,product_id,url',
             'productTypeVariantFirst.variantOptionsFirstImage:variant_option_id,variant_type_id,image_url'
         ])
-        ->paginate($perPage, ['*'], 'page', $page);
+            ->paginate($perPage, ['*'], 'page', $page);
 
         if ($products->isEmpty()) {
             return response()->json([
@@ -137,46 +152,45 @@ class CategoryController extends Controller {
         ]);
     }
 
-    public function categorySub($categoryId) {
+    public function categorySub($categoryId)
+    {
         $category = Category::where('category_id', $categoryId)
-                            ->with('subCategories:category_id,sub_category_id,sub_category_name')
-                            ->first();
+            ->with('subCategories:category_id,sub_category_id,sub_category_name')
+            ->first();
 
-        if(!$category) {
+        if (!$category) {
             return response()->json([
                 'status' => true,
-                'category' => null 
+                'category' => null
             ]);
         }
 
         return response()->json([
             'status' => true,
-            'categorySubs' => CategorySubResource::collection($category->subCategories) 
+            'categorySubs' => CategorySubResource::collection($category->subCategories)
             // 'categorySub' => $category
 
         ]);
     }
 
 
-    public function subCatByCategoryId($categoryId) {
+    public function subCatByCategoryId($categoryId)
+    {
         $category = Category::where('category_id', $categoryId)
-                            ->with('subcategories:category_id,sub_category_id,sub_category_name')
-                            ->first();
+            ->with('subcategories:category_id,sub_category_id,sub_category_name')
+            ->first();
 
-        if(!$category) {
+        if (!$category) {
             return response()->json([
                 'status' => true,
-                'category' => null 
+                'category' => null
             ]);
         }
 
         return response()->json([
             'status' => true,
             // 'categorySub' => new CategorySubResource($category) 
-            'categorySub' =>  SubCategoryResource::collection($category->subcategories)
+            'categorySub' => SubCategoryResource::collection($category->subcategories)
         ]);
     }
 }
-
-
-

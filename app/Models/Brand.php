@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Brand extends Model{
 
@@ -11,10 +12,14 @@ class Brand extends Model{
     protected $primaryKey = 'brand_id';
     protected $fillable = [
     'brand_name',
-    'image_url'
     ];
 
     public function brandProducts():HasMany{
         return $this->hasMany(Product::class,'brand_id');
     }
+
+    public function image(): MorphOne {
+        return $this->morphOne(Image::class, 'imageable');
+    }
+
 }

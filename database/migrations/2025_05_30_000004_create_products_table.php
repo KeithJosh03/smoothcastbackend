@@ -33,7 +33,6 @@ return new class extends Migration {
                 ->nullable();
             $table->text('specifications')
                 ->nullable();
-
         });
     }
     public function down(): void {

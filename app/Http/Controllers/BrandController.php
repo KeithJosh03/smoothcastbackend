@@ -27,18 +27,27 @@ class BrandController extends Controller {
     }
 
     public function store(Request $request) {
+
         $validated = $request->validate([
             'brand_name' => ['required', 'string', 'max:255'],
-            'image_url' => ['required', 'string'],
+            'image_url'  => ['required', 'string'],
         ]);
 
-        $brand = Brand::create($validated);
+        $brand = Brand::create([
+            'brand_name' => $validated['brand_name'],
+        ]);
 
-        return response()->json([
-            'brandId' => $brand->brand_id,
-            'brandName' => $brand->brand_name, 
-            'imageUrl' => $brand->image_url,
-        ], Response::HTTP_CREATED);
+        $brand->image()->create([
+            'image_url' => $validated['image_url'],
+            'isMain'    => true,
+        ]);
+
+        $brand->load('image');
+
+        return response()->json(
+            new BrandResource($brand),
+            Response::HTTP_CREATED
+        );
     }
 
     public function show(Brand $brand){
@@ -50,13 +59,38 @@ class BrandController extends Controller {
     }
 
     public function update(Request $request, Brand $brand) {
-
+        // Validate the incoming request for brand name and image URL
         $validated = $request->validate([
             'brand_name' => ['sometimes', 'string', 'max:100'],
-            'image_url'  => ['sometimes', 'string'],
+            'image_url'  => ['sometimes', 'string'], // image_url will come from the upload response
         ]);
 
-        $brand->update($validated);
+        // Update brand name if provided
+        if (isset($validated['brand_name'])) {
+            $brand->brand_name = $validated['brand_name'];
+        }
+
+        // If an image URL is provided, update or create the brand's image record
+        if (isset($validated['image_url'])) {
+            $brandImage = $brand->image;
+
+            if ($brandImage) {
+                // If the brand already has an image, update it
+                $brandImage->update([
+                    'image_url' => $validated['image_url'],
+                    'isMain'    => true, // Assuming this is the main image
+                ]);
+            } else {
+                // If no image exists, create a new image record for the brand
+                $brand->image()->create([
+                    'image_url' => $validated['image_url'],
+                    'isMain'    => true,
+                ]);
+            }
+        }
+
+        // Save the brand if it's been modified (though typically it's already done with the update and image handling)
+        $brand->save();
 
         return response()->json(new BrandResource($brand));
     }
@@ -104,22 +138,29 @@ class BrandController extends Controller {
 
 
 
-    public function brandLogo () {
-        $brand = Brand::whereNotNull('image_url')->get();
-        if (!$brand || $brand->isEmpty()) {
+    public function brandLogo() {
+        $brands = Brand::with('image') // eager load image
+            ->whereHas('image', function ($query) {
+                $query->whereNotNull('image_url');
+            })
+            ->get();
+
+        if ($brands->isEmpty()) {
             return response()->json([
                 'status' => true,
                 'brandLogo' => []
             ]);
         }
+
         return response()->json([
             'status' => true,
-            'brandlogo' => BrandResource::collection($brand)
+            'brandLogo' => BrandResource::collection($brands)
         ]);
     }
 
-    public function BrandNameList(){
-        $brands = Brand::all(['brand_id','brand_name']);
+    public function BrandNameList() {
+        $brands = Brand::with('image')
+            ->get(['brand_id', 'brand_name']);
         return response()->json([
             'status' => true,
             'brands' => BrandResource::collection($brands)

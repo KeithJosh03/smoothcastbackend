@@ -13,7 +13,6 @@ return new class extends Migration {
                 ->constrained('product_variant_types','variant_type_id')
                 ->onDelete('cascade');
             $table->decimal('price_adjustment',10,2);
-            $table->string('image_url',225);
             $table->string('variant_option_value',225);
         });
     }

@@ -6,8 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
-class ImageUploadController extends Controller {
-    public function upload(Request $request) {
+class ImageUploadController extends Controller
+{
+    public function upload(Request $request)
+    {
         $request->validate([
             'files' => 'required|array',
             'files.*' => 'image|mimes:jpg,jpeg,png,gif,bmp,webp|max:5120',
@@ -17,7 +19,7 @@ class ImageUploadController extends Controller {
         $uploaded = [];
 
         foreach ($request->file('files') as $i => $file) {
-            $originIndex = (int) $request->originIndex[$i];
+            $originIndex = (int)$request->originIndex[$i];
 
             $name = Str::random(40) . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('uploads', $name, 'public');
@@ -27,12 +29,9 @@ class ImageUploadController extends Controller {
                 'url' => Storage::url($path),
             ];
         }
-        
+
         return response()->json([
             'files' => $uploaded
         ]);
     }
 }
-
-
-
