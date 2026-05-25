@@ -72,24 +72,24 @@ class CategoryController extends Controller
     {
         $categories = Category::select('category_id', 'category_name')
             ->with([
-            'products' => function ($query) {
-            $query->select(
-                'product_id',
-                'product_title',
-                'category_id',
-                'brand_id',
-                'base_price',
-                'sub_category_id'
-            )
-                ->with([
-                    'brand:brand_id,brand_name',
-                    'subCategories:sub_category_id,sub_category_name',
-                    'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
-                    'productTypeVariant.firstVariantOption.images' // eager load variant option images
-                ])
-                ->take(4);
-        }
-        ])
+                'products' => function ($query) {
+                    $query->select(
+                        'product_id',
+                        'product_title',
+                        'category_id',
+                        'brand_id',
+                        'base_price',
+                        'sub_category_id'
+                    )
+                        ->with([
+                            'brand:brand_id,brand_name',
+                            'subCategories:sub_category_id,sub_category_name',
+                            'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
+                            'productTypeVariant.firstVariantOption.image'
+                        ])
+                        ->take(4);
+                }
+            ])
             ->get();
 
         return response()->json([
@@ -118,11 +118,11 @@ class CategoryController extends Controller
             ->products()
             ->select('base_price', 'product_id', 'brand_id', 'sub_category_id', 'product_title')
             ->with([
-            'brand:brand_id,brand_name',
-            'subCategories:sub_category_id,sub_category_name',
-            'productThumbNail:product_img_id,product_id,url',
-            'productTypeVariantFirst.variantOptionsFirstImage:variant_option_id,variant_type_id,image_url'
-        ])
+                'brand:brand_id,brand_name',
+                'subCategories:sub_category_id,sub_category_name',
+                'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
+                'productTypeVariantFirst.firstVariantOption.image'
+            ])
             ->paginate($perPage, ['*'], 'page', $page);
 
         if ($products->isEmpty()) {

@@ -19,7 +19,7 @@ class ImageUploadController extends Controller
         $uploaded = [];
 
         foreach ($request->file('files') as $i => $file) {
-            $originIndex = (int)$request->originIndex[$i];
+            $originIndex = (int) $request->originIndex[$i];
 
             $name = Str::random(40) . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('uploads', $name, 'public');

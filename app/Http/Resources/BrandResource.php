@@ -5,13 +5,16 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class BrandResource extends JsonResource {
-    public function toArray($request): array {
+class BrandResource extends JsonResource
+{
+    public function toArray($request): array
+    {
         return [
-            'brandId'   => $this->brand_id,
+            'brandId' => $this->brand_id,
             'brandName' => $this->brand_name,
-            'imageUrl'  => optional($this->image)->image_url,
+            'imageUrl' => $this->whenLoaded('image', function () {
+            return $this->image->image_url ?? null;
+        }),
         ];
     }
 }
-

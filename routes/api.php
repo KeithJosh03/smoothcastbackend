@@ -17,9 +17,10 @@ use App\Http\Controllers\SetupImageController;
 use App\Http\Controllers\ProductDiscountController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\ReviewController;
 
 
-Route::post('/imageupload/uploads',[ImageUploadController::class,'upload']);
+Route::post('/imageupload/uploads', [ImageUploadController::class, 'upload']);
 
 // BRANDS API
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
@@ -29,18 +30,20 @@ Route::put('/brands/{brand}', [BrandController::class, 'update']);
 
 // CATEGORIES API
 Route::get('/categories/specificCategory/{categoryname}', [CategoryController::class, 'specificCategory']);
-Route::get('/categories/categorycollection',[CategoryController::class, 'categoryproductcollection']);
+Route::get('/categories/categorycollection', [CategoryController::class, 'categoryproductcollection']);
 Route::get('/categories/categorysub/{categoryId}', [CategoryController::class, 'categorySub']);
-Route::get('/categories/SubCatByCategoryId/{categoryId}',[CategoryController::class,'subCatByCategoryId']);
+Route::get('/categories/SubCatByCategoryId/{categoryId}', [CategoryController::class, 'subCatByCategoryId']);
 
 // PRODUCTS API
 Route::get('/products/productsearchinitial/{productname}', [ProductController::class, 'productDetailInitial']);
 Route::get('/products/newarrival/', [ProductController::class, 'newArrivals']);
 Route::get('/products/productdetail/{productId}', [ProductController::class, 'productSpecificDetail']);
-// Route::get('/products/productdetailDashboard/{productId}', [ProductController::class, 'ProductDetailsDashboard']);
 Route::get('/products/productdetailEditDashboard/{productId}', [ProductController::class, 'ProductDetailsEditDashboard']);
 Route::get('/products/productsearch', [ProductController::class, 'productSearch']);
+
+// Dashboard Product API
 Route::get('/products/productlistdashboardsearch/', [ProductController::class, 'productListDashBoardSearch']);
+Route::delete('/products/delete/{productId}', [ProductController::class, 'destroy']);
 
 
 // Route::get('/setups/setupcollection/', [SetupController::class, 'setupcollection']);
@@ -55,7 +58,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
 
 
-Route::post('products/store',[ProductController::class,'store']);
+Route::post('products/store', [ProductController::class, 'store']);
 
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('productimage', ProductImageController::class);
@@ -70,3 +73,6 @@ Route::apiResource('subcategory', SubCategoryController::class);
 Route::apiResource('setups', SetupController::class);
 Route::apiResource('inclusions', InclusionController::class);
 Route::apiResource('setupimages', SetupImageController::class);
+
+// REVIEWS API
+Route::apiResource('reviews', ReviewController::class)->only(['index', 'store', 'destroy']);

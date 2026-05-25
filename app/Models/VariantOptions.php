@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class VariantOptions extends Model
 {
@@ -20,16 +20,18 @@ class VariantOptions extends Model
 
     public function setupItemVariant(): HasMany
     {
-        return $this->hasMany(SetupItemVariant::class , 'variant_option_id', 'variant_option_id');
+        return $this->hasMany(SetupItemVariant::class, 'variant_option_id', 'variant_option_id');
     }
 
     public function variantType(): BelongsTo
     {
-        return $this->belongsTo(ProductVariantType::class , 'variant_type_id');
+        return $this->belongsTo(ProductVariantType::class, 'variant_type_id');
     }
 
-    public function images(): MorphMany
+    public function image(): MorphOne
     {
-        return $this->morphMany(Image::class , 'imageable');
+        return $this->MorphOne(Image::class, 'imageable');
     }
+
+
 }

@@ -12,9 +12,11 @@ use App\Http\Resources\BrandSpecificProducts;
 use App\Http\Resources\BrandResource;
 
 
-class BrandController extends Controller {
+class BrandController extends Controller
+{
 
-    public function index(){
+    public function index()
+    {
         $brands = Brand::all();
         return response()->json([
             'status' => true,
@@ -22,15 +24,17 @@ class BrandController extends Controller {
         ]);
     }
 
-    public function create(){
+    public function create()
+    {
 
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
 
         $validated = $request->validate([
             'brand_name' => ['required', 'string', 'max:255'],
-            'image_url'  => ['required', 'string'],
+            'image_url' => ['required', 'string'],
         ]);
 
         $brand = Brand::create([
@@ -39,7 +43,7 @@ class BrandController extends Controller {
 
         $brand->image()->create([
             'image_url' => $validated['image_url'],
-            'isMain'    => true,
+            'isMain' => true,
         ]);
 
         $brand->load('image');
@@ -50,19 +54,22 @@ class BrandController extends Controller {
         );
     }
 
-    public function show(Brand $brand){
+    public function show(Brand $brand)
+    {
         return $brand;
     }
 
-    public function edit(Brand $brand){
+    public function edit(Brand $brand)
+    {
 
     }
 
-    public function update(Request $request, Brand $brand) {
+    public function update(Request $request, Brand $brand)
+    {
         // Validate the incoming request for brand name and image URL
         $validated = $request->validate([
             'brand_name' => ['sometimes', 'string', 'max:100'],
-            'image_url'  => ['sometimes', 'string'], // image_url will come from the upload response
+            'image_url' => ['sometimes', 'string'], // image_url will come from the upload response
         ]);
 
         // Update brand name if provided
@@ -78,13 +85,14 @@ class BrandController extends Controller {
                 // If the brand already has an image, update it
                 $brandImage->update([
                     'image_url' => $validated['image_url'],
-                    'isMain'    => true, // Assuming this is the main image
+                    'isMain' => true, // Assuming this is the main image
                 ]);
-            } else {
+            }
+            else {
                 // If no image exists, create a new image record for the brand
                 $brand->image()->create([
                     'image_url' => $validated['image_url'],
-                    'isMain'    => true,
+                    'isMain' => true,
                 ]);
             }
         }
@@ -98,31 +106,33 @@ class BrandController extends Controller {
 
 
 
-    public function destroy(Brand $brand){
+    public function destroy(Brand $brand)
+    {
         $brand->delete();
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function specificbrand($brandname, Request $request) {
+    public function specificbrand($brandname, Request $request)
+    {
         $perPage = 12; // Products per page
         $page = $request->get('page', 1);
-        
+
         $brand = Brand::where('brand_name', $brandname)->first();
-        
+
         if (!$brand) {
             return response()->json([
                 'status' => false,
                 'message' => 'Brand not found'
             ], 404);
         }
-        
+
         $brandproducts = $brand->brandProducts()
             ->with([
-                'categorytype:type_name,type_id',
-                'productVariants:product_id,variant_id,full_model_name,product_price',
-                'productVariants.discountsVariants:variant_id,discount_type,discount_value',
-                'productVariants.mainImage:variant_id,url',
-            ])
+            'categorytype:type_name,type_id',
+            'productVariants:product_id,variant_id,full_model_name,product_price',
+            'productVariants.discountsVariants:variant_id,discount_type,discount_value',
+            'productVariants.mainImage:variant_id,url',
+        ])
             ->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
@@ -138,11 +148,12 @@ class BrandController extends Controller {
 
 
 
-    public function brandLogo() {
+    public function brandLogo()
+    {
         $brands = Brand::with('image') // eager load image
             ->whereHas('image', function ($query) {
-                $query->whereNotNull('image_url');
-            })
+            $query->whereNotNull('image_url');
+        })
             ->get();
 
         if ($brands->isEmpty()) {
@@ -158,9 +169,9 @@ class BrandController extends Controller {
         ]);
     }
 
-    public function BrandNameList() {
-        $brands = Brand::with('image')
-            ->get(['brand_id', 'brand_name']);
+    public function BrandNameList()
+    {
+        $brands = Brand::get(['brand_id', 'brand_name']);
         return response()->json([
             'status' => true,
             'brands' => BrandResource::collection($brands)
