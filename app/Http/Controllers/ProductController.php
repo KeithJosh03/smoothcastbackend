@@ -1,12 +1,11 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Image;
 use App\Models\ProductVariantType;
 use App\Models\VariantOptions;
-
+use App\Models\ProductSku; 
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -38,108 +37,168 @@ class ProductController extends Controller
 
     }
 
-    public function store(Request $request)
+    public function store(Request $request) 
     {
-        $validated = $request->validate([
-            'brand_id' => ['nullable', 'exists:brands,brand_id'],
-            'category_id' => ['required', 'exists:categories,category_id'],
-            'sub_category_id' => ['nullable', 'exists:sub_categories,sub_category_id'],
-            'product_title' => ['required', 'string', 'max:100'],
-            'base_price' => ['required', 'numeric', 'min:0'],
-            'description' => ['nullable', 'string'],
-            'features' => ['nullable', 'string'],
-            'specifications' => ['nullable', 'string'],
+        // 1. Establish structural state condition flag
+        // Evaluates true ONLY if variants key exists AND contains items
+        $hasVariants = $request->has('variants') && is_array($request->input('variants')) && count($request->input('variants')) > 0;
 
-            'medias' => ['nullable', 'array'],
-            'medias.*.isMain' => ['nullable', 'boolean'],
-            'medias.*.url' => ['required_with:medias', 'string'],
+        // 2. Validate incoming request parameters
+        $validatedData = $request->validate([
+            'product_title'   => 'required|string|max:100',
+            'base_price'      => 'required|numeric|min:0.00',
+            'brand_id'        => 'nullable|exists:brands,brand_id',
+            'category_id'     => 'required|exists:categories,category_id',
+            'sub_category_id' => 'nullable|exists:sub_categories,sub_category_id',
+            'description'     => 'nullable|string',
+            'features'        => 'nullable|string',
+            'specifications'  => 'nullable|string',
+            
+            // Global Media Gallery Items
+            'medias'          => 'nullable|array',
+            'medias.*.url'    => 'required_with:medias|string',
+            'medias.*.isMain' => 'nullable|boolean',
 
-            'variants' => ['nullable', 'array'],
-            'variants.*.variantTypeName' => ['required_with:variants', 'string'],
-            'variants.*.variantOptions' => ['required_with:variants', 'array'],
-            'variants.*.variantOptions.*.price_adjustment' => ['nullable', 'numeric', 'min:0'],
-            'variants.*.variantOptions.*.variantOptionValue' => ['required_with:variants.*.variantOptions', 'string'],
-            'variants.*.variantOptions.*.variant_image' => ['nullable', 'string'],
+            // Raw variant configuration definitions payload array
+            'variants'        => 'nullable|array',
+            
+            // BRANCH A: Simple Product Inventory Setup (Required ONLY if there are no variations)
+            'sku'             => [
+                $hasVariants ? 'nullable' : 'required',
+                'string',
+                'unique:products,sku'
+            ],
+            'stock_quantity'  => [
+                $hasVariants ? 'nullable' : 'required',
+                'integer',
+                'min:0'
+            ],
+
+            // BRANCH B: Variant Matrix Generation Setup (Required ONLY if variants are active)
+            'variant_matrix'                        => $hasVariants ? 'required|array|min:1' : 'nullable|array',
+            'variant_matrix.*.sku_code'             => $hasVariants ? 'required|string|unique:product_skus,sku_code' : 'nullable|string',
+            'variant_matrix.*.price'                => $hasVariants ? 'required|numeric|min:0.00' : 'nullable|numeric',
+            'variant_matrix.*.stock_quantity'       => $hasVariants ? 'required|integer|min:0' : 'nullable|integer',
+            'variant_matrix.*.variant_option_ids'   => $hasVariants ? 'required|array|min:1' : 'nullable|array',
+            'variant_matrix.*.variant_option_ids.*' => 'integer',
+            'variant_matrix.*.image_url'            => 'nullable|string', // 🚨 ADDED: Validates parallel uploaded row photos
         ]);
 
         DB::beginTransaction();
-
-        // Create Product
         try {
-            $product = Product::create([
-                'brand_id' => $validated['brand_id'] ?? null,
-                'category_id' => $validated['category_id'],
-                'sub_category_id' => $validated['sub_category_id'] ?? null,
-                'product_title' => $validated['product_title'],
-                'base_price' => $validated['base_price'],
-                'description' => $validated['description'] ?? null,
-                'features' => $validated['features'] ?? null,
-                'specifications' => $validated['specifications'] ?? null,
-                'release_date' => now(),
-            ]);
+            // 3. Map foundational parent catalog elements
+            $productData = [
+                'brand_id'        => $validatedData['brand_id'] ?? null,
+                'category_id'     => $validatedData['category_id'],
+                'sub_category_id' => $validatedData['sub_category_id'] ?? null,
+                'product_title'   => $validatedData['product_title'],
+                'base_price'      => $validatedData['base_price'],
+                'description'     => $validatedData['description'] ?? null,
+                'features'        => $validatedData['features'] ?? null,
+                'specifications'  => $validatedData['specifications'] ?? null,
+                'release_date'    => \Carbon\Carbon::now(), 
+            ];
 
-            // Store product iamges
-            if (!empty($validated['medias'])) {
-                $mainCount = collect($validated['medias'])->where('isMain', true)->count();
-                if ($mainCount > 1) {
-                    throw new \Exception('Only one main image is allowed.');
-                }
-
-                $hasMain = collect($validated['medias'])->contains('isMain', true);
-
-                foreach ($validated['medias'] as $index => $media) {
-                    $product->images()->create([
-                        'image_url' => $media['url'],
-                        'isMain' => $hasMain
-                            ? ($media['isMain'] ?? false)
-                            : $index === 0, // if no main, first image becomes main
-                    ]);
-                }
+            // 4. Implement Inventory Fork Strategy
+            if (!$hasVariants) {
+                $productData['sku'] = $validatedData['sku'];
+                $productData['stock_quantity'] = $validatedData['stock_quantity'];
+            } else {
+                $productData['sku'] = null;
+                $productData['stock_quantity'] = null;
             }
 
+            // 5. Create Parent Record
+            $product = Product::create($productData);
 
-
-            if (!empty($validated['variants'])) {
-                foreach ($validated['variants'] as $variant) {
-                    $variantType = ProductVariantType::create([
-                        'product_id' => $product->product_id,
-                        'variant_type_name' => $variant['variantTypeName'],
-                    ]);
-
-                    foreach ($variant['variantOptions'] as $option) {
-                        $variantOption = $variantType->variantOptions()->create([
-                            'variant_option_value' => $option['variantOptionValue'],
-                            'price_adjustment' => $option['price_adjustment'] ?? 0,
+            // 6. Process Global Polymorphic Media Attachments
+            if (!empty($validatedData['medias'])) {
+                foreach ($validatedData['medias'] as $media) {
+                    if (!empty($media['url'])) {
+                        $product->images()->create([
+                            'image_url' => $media['url'],
+                            'isMain'    => $media['isMain'] ?? false,
                         ]);
-
-                        // 3a️⃣ Store variant option image (optional)
-                        if (!empty($option['variant_image'])) {
-                            $variantOption->image()->create([
-                                'image_url' => $option['variant_image'],
-                                'isMain' => true,
-                            ]);
-                        }
                     }
                 }
             }
 
+            // 7. Branch B: Iterate through dynamic matrix variant combinations
+            if ($hasVariants) {
+                $realOptionIds = []; // Map: $realOptionIds[variantIndex][simulatedId] = real_variant_option_id
+
+                if (!empty($validatedData['variants'])) {
+                    foreach ($validatedData['variants'] as $vIndex => $variantData) {
+                        $newVariantType = ProductVariantType::create([
+                            'product_id' => $product->product_id,
+                            'variant_name' => $variantData['variantTypeName'] ?? '',
+                        ]);
+
+                        if (!empty($variantData['variantOptions'])) {
+                            foreach ($variantData['variantOptions'] as $optIndex => $optData) {
+                                $newOption = $newVariantType->variantOptions()->create([
+                                    'variant_value' => $optData['variantOptionValue'] ?? '',
+                                    'price_adjustment' => $optData['price_adjustment'] ?? 0,
+                                ]);
+
+                                if (!empty($optData['variant_image'])) {
+                                    $newOption->image()->create([
+                                        'image_url' => $optData['variant_image'],
+                                        'isMain' => true,
+                                    ]);
+                                }
+                                
+                                // Map the simulated ID (optIndex + 1) to real ID
+                                $simulatedId = $optIndex + 1;
+                                $realOptionIds[$vIndex][$simulatedId] = $newOption->variant_option_id;
+                            }
+                        }
+                    }
+                }
+
+                foreach ($validatedData['variant_matrix'] as $matrixRow) {
+                    // Save standalone item SKU configuration row
+                    $productSku = ProductSku::create([
+                        'product_id'     => $product->product_id,
+                        'sku_code'       => $matrixRow['sku_code'],
+                        'price'          => $matrixRow['price'],
+                        'stock_quantity' => $matrixRow['stock_quantity'],
+                        'is_active'      => true
+                    ]);
+
+                    // Attach row-specific image polymorphically directly to the SKU if it exists!
+                    if (!empty($matrixRow['image_url'])) {
+                        $productSku->images()->create([
+                            'image_url' => $matrixRow['image_url'],
+                            'isMain'    => true, // Acts as the main cover photo for this model combination
+                        ]);
+                    }
+
+                    // Map simulated IDs to real IDs for syncing
+                    $realIdsToSync = [];
+                    if (!empty($matrixRow['variant_option_ids'])) {
+                        foreach ($matrixRow['variant_option_ids'] as $typeIndex => $simulatedId) {
+                            if (isset($realOptionIds[$typeIndex][$simulatedId])) {
+                                $realIdsToSync[] = $realOptionIds[$typeIndex][$simulatedId];
+                            }
+                        }
+                    }
+
+                    // Sync the specific option components via pivot bridge
+                    $productSku->variantOptions()->sync($realIdsToSync);
+                }
+            }
 
             DB::commit();
-
             return response()->json([
-                'status' => true,
-                'message' => 'Product created successfully',
-                'product' => $product->load('images'),
+                'success' => true, 
+                'product_id' => $product->product_id,
+                'mode' => $hasVariants ? 'variant_matrix' : 'simple'
             ], 201);
 
         } catch (\Exception $e) {
-
             DB::rollBack();
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to create product: ' . $e->getMessage(),
-            ], 500);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -304,7 +363,7 @@ class ProductController extends Controller
                         if ($existingVariant) {
                             if (!empty($variantData['variant_type_name'])) {
                                 $existingVariant->update([
-                                    'variant_type_name' => $variantData['variant_type_name'],
+                                    'variant_name' => $variantData['variant_type_name'],
                                 ]);
                             }
 
@@ -320,7 +379,7 @@ class ProductController extends Controller
                                         if ($existingOption) {
                                             $optUpdates = [];
                                             if (isset($optData['variant_option_value'])) {
-                                                $optUpdates['variant_option_value'] = $optData['variant_option_value'];
+                                                $optUpdates['variant_value'] = $optData['variant_option_value'];
                                             }
                                             if (isset($optData['price_adjustment'])) {
                                                 $optUpdates['price_adjustment'] = $optData['price_adjustment'];
@@ -361,7 +420,7 @@ class ProductController extends Controller
                                     } else {
                                         // New option
                                         $newOption = $existingVariant->variantOptions()->create([
-                                            'variant_option_value' => $optData['variant_option_value'] ?? '',
+                                            'variant_value' => $optData['variant_option_value'] ?? '',
                                             'price_adjustment' => $optData['price_adjustment'] ?? 0,
                                         ]);
 
@@ -379,13 +438,13 @@ class ProductController extends Controller
                         // Brand new variant type
                         $newVariantType = ProductVariantType::create([
                             'product_id' => $product->product_id,
-                            'variant_type_name' => $variantData['variant_type_name'] ?? '',
+                            'variant_name' => $variantData['variant_type_name'] ?? '',
                         ]);
 
                         if (!empty($variantData['variant_options'])) {
                             foreach ($variantData['variant_options'] as $optData) {
                                 $newOption = $newVariantType->variantOptions()->create([
-                                    'variant_option_value' => $optData['variant_option_value'] ?? '',
+                                    'variant_value' => $optData['variant_option_value'] ?? '',
                                     'price_adjustment' => $optData['price_adjustment'] ?? 0,
                                 ]);
 
@@ -431,20 +490,55 @@ class ProductController extends Controller
         return response()->json(null, 204);
     }
 
+    public function checkSku(Request $request)
+    {
+        $sku = $request->query('sku');
+        if (!$sku) {
+            return response()->json(['exists' => false]);
+        }
+
+        $existsInProduct = Product::where('sku', $sku)->exists();
+        $existsInVariant = ProductSku::where('sku_code', $sku)->exists();
+
+        return response()->json([
+            'exists' => $existsInProduct || $existsInVariant
+        ]);
+    }
+
     public function productSpecificDetail($productId)
     {
-        $productdetail = Product::select('product_id', 'sub_category_id', 'category_id', 'brand_id', 'product_title', 'base_price', 'description', 'features', 'specifications')
-            ->with([
-                'brand:brand_id,brand_name',
-                'subCategories:sub_category_name,sub_category_id',
-                'category:category_id,category_name',
-                'images',
-                'productTypeVariant:product_id,variant_type_id,variant_type_name',
-                'productTypeVariant.variantOptions:variant_type_id,variant_option_id,variant_option_value,price_adjustment',
-                'productTypeVariant.variantOptions.image'
-            ])
-            ->where('product_id', $productId)
-            ->first();
+        $productdetail = Product::select(
+            'product_id', 
+            'sub_category_id', 
+            'category_id', 
+            'brand_id', 
+            'product_title', 
+            'base_price', 
+            'description', 
+            'features', 
+            'specifications',
+            'sku',            // Simple Product SKU
+            'stock_quantity'  // Simple Product Stock Quantity
+        )
+        ->with([
+            'brand:brand_id,brand_name',
+            'subCategory:sub_category_name,sub_category_id',
+            'category:category_id,category_name',
+            'images',
+            'productTypeVariant:product_id,variant_type_id,variant_name',
+            
+            // 🚨 Removed price_adjustment to fix 1054 QueryException
+            'productTypeVariant.variantOptions:variant_type_id,variant_option_id,variant_value', 
+            
+            'productSkus' => function ($query) {
+                $query->where('is_active', true)
+                    ->select('sku_id', 'product_id', 'sku_code', 'price', 'stock_quantity', 'is_active')
+                    ->with(['images', 'variantOptions']);
+            }
+        ])
+        ->where('product_id', $productId)
+        ->first();
+
         if (!$productdetail) {
             return response()->json([
                 'status' => true,
@@ -479,6 +573,8 @@ class ProductController extends Controller
     {
 
         $search = $request->query('productTitle');
+        $brandId = $request->query('brandId');
+        $categoryId = $request->query('categoryId');
 
         $query = Product::query()
             ->when($search, function ($q) use ($search) {
@@ -487,22 +583,32 @@ class ProductController extends Controller
                     ['%' . strtolower($search) . '%']
                 );
             })
+            ->when($brandId, function ($q) use ($brandId) {
+                $q->where('brand_id', $brandId);
+            })
+            ->when($categoryId, function ($q) use ($categoryId) {
+                $q->where('category_id', $categoryId);
+            })
             ->select(
                 'product_id',
                 'product_title',
                 'base_price',
                 'category_id',
                 'sub_category_id',
-                'brand_id'
+                'brand_id',
+                'sku',
+                'stock_quantity'
             )
             ->with([
                 'category:category_id,category_name',
                 'brand:brand_id,brand_name',
                 'subCategories:sub_category_id,sub_category_name',
-                'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
-                'productTypeVariant:product_id,variant_type_id,variant_type_name',
-                'productTypeVariant.variantOptions:variant_option_id,variant_type_id,price_adjustment,variant_option_value',
-                'productTypeVariant.variantOptions.image:image_id,imageable_id,imageable_type,image_url,isMain'
+                'productTypeVariant:product_id,variant_type_id,variant_name',
+                'productSkus' => function ($query) {
+                    $query->where('is_active', true)
+                        ->select('sku_id', 'product_id', 'sku_code', 'price', 'stock_quantity', 'is_active')
+                        ->with(['variantOptions:variant_option_id,variant_value']);
+                }
             ])
             ->orderBy('product_id', 'desc');
 

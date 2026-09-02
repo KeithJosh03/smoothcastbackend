@@ -17,7 +17,7 @@ class CategoryCollectionResource extends ResourceCollection {
                     'brandName' => $product->brand?->brand_name,
                     'productThumbNail' =>
                         $product->mainImage?->image_url
-                        ?? $product->productTypeVariant?->first()?->firstVariantOption?->images?->first()?->image_url,
+                        ?? $product->firstProductSku?->mainImage?->image_url,
                     'productTitle' => $product->product_title,
                     'subCategoryName' => $product->subCategories?->sub_category_name,
                 ];

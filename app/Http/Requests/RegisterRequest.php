@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class RegisterRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        $rules = [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'provider_name' => ['nullable', 'string', 'in:google,facebook'],
+            'provider_id' => ['nullable', 'string'],
+            'avatar_url' => ['nullable', 'url'],
+        ];
+
+        if (empty($this->provider_id)) {
+            // Manual registration requires unique email and a password
+            $rules['email'][] = 'unique:users,email';
+            $rules['password'] = ['required', 'string', 'min:8'];
+        } else {
+            // Social registration doesn't strictly require password
+            $rules['password'] = ['nullable'];
+        }
+
+        return $rules;
+    }
+}

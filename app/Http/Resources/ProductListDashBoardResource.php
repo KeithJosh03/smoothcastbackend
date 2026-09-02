@@ -15,19 +15,28 @@ class ProductListDashBoardResource extends JsonResource
             'brandName' => $this->brand->brand_name ?? null,
             'subCategoryName' => $this->subCategories->sub_category_name ?? null,
             'productTypeVariant' => ($this->productTypeVariant ?? collect())->map(function ($variant) {
-            return [
-                    'variantTypeName' => $variant->variant_type_name,
-                    'variantOptions' => ($variant->variantOptions ?? collect())->map(function ($option) {
                 return [
-                            'optionId' => $option->variant_option_id,
-                            'optionName' => $option->variant_option_value,
-                            'priceAdjustment' => $option->price_adjustment,
-                            'image' => optional($option->image)->image_url,
-                        ];
-            }
-                ),
+                    'variantTypeName' => $variant->variant_type_name,
                 ];
-        }),
+            }),
+            'sku' => $this->sku,
+            'stockQuantity' => $this->stock_quantity,
+            'hasVariants' => $this->productTypeVariant && $this->productTypeVariant->isNotEmpty(),
+            'productSkus' => ($this->productSkus ?? collect())->map(function ($sku) {
+                return [
+                    'skuId' => $sku->sku_id,
+                    'skuCode' => $sku->sku_code,
+                    'price' => $sku->price,
+                    'stockQuantity' => $sku->stock_quantity,
+                    'isActive' => $sku->is_active,
+                    'variantOptions' => ($sku->variantOptions ?? collect())->map(function ($opt) {
+                        return [
+                            'optionId' => $opt->variant_option_id,
+                            'optionName' => $opt->variant_value,
+                        ];
+                    }),
+                ];
+            }),
         ];
     }
 }

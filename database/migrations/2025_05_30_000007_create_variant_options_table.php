@@ -9,16 +9,27 @@ return new class extends Migration {
     {
         Schema::create('variant_options', function (Blueprint $table) {
             $table->id('variant_option_id');
+
             $table
                 ->foreignId('variant_type_id')
                 ->constrained('product_variant_types', 'variant_type_id')
-                ->onDelete('cascade');
-            $table->decimal('price_adjustment', 10, 2);
-            $table->string('variant_option_value', 225);
+                ->cascadeOnDelete();
+
+            $table->string('variant_value', 225);
+
+            $table->timestamps();
+
+            $table->index(
+                ['variant_type_id', 'variant_value'],
+                'variant_options_type_value_index'
+            );
         });
     }
+
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('variant_options');
+        Schema::enableForeignKeyConstraints();
     }
 };

@@ -5,37 +5,30 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('products', function (Blueprint $table) {
             $table->id('product_id');
-            $table
-                ->foreignId('category_id')
-                ->constrained('categories', 'category_id')
-                ->onDelete('cascade');
-            $table
-                ->foreignId('sub_category_id')
-                ->nullable()
-                ->constrained('sub_categories', 'sub_category_id')
-                ->onDelete('cascade');
-            $table
-                ->foreignId('brand_id')
-                ->nullable()
-                ->constrained('brands','brand_id')
-                ->onDelete('cascade');
-            $table->string('product_title', 100);
-            $table->decimal('base_price',10,2);
-            $table->text('description')
-                ->nullable();
-            $table->timestamp('release_date')
-                ->useCurrent()
-                ->nullable();
-            $table->text('features')
-                ->nullable();
-            $table->text('specifications')
-                ->nullable();
+            $table->foreignId('brand_id')->constrained('brands', 'brand_id');
+            $table->foreignId('category_id')->constrained('categories', 'category_id');
+            $table->foreignId('sub_category_id')->constrained('sub_categories', 'sub_category_id');
+            $table->string('product_title');
+            $table->decimal('base_price', 10, 2);
+            $table->text('description');
+            $table->text('features')->nullable();
+            $table->text('specifications')->nullable();
+            $table->date('release_date')->nullable();
+            
+            // 🚨 ADD THESE FOR NO-VARIANT SUPPORT
+            $table->string('sku')->nullable()->unique();
+            $table->integer('stock_quantity')->nullable()->default(0);
+            
+            $table->timestamps();
         });
     }
-    public function down(): void {
+
+    public function down(): void
+    {
         Schema::dropIfExists('products');
     }
 };

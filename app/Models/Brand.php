@@ -10,6 +10,7 @@ class Brand extends Model{
 
     public $timestamps = true;
     protected $primaryKey = 'brand_id';
+    
     protected $fillable = [
     'brand_name',
     ];

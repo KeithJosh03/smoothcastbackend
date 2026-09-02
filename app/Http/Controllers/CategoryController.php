@@ -18,7 +18,7 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $categories = Category::all();
+        $categories = Category::withCount('subCategories')->get();
         return response()->json([
             'status' => true,
             'categories' => CategoryResource::collection($categories)
@@ -83,17 +83,18 @@ class CategoryController extends Controller
                     )
                         ->with([
                             'brand:brand_id,brand_name',
-                            'subCategories:sub_category_id,sub_category_name',
+                            'subCategory:sub_category_id,sub_category_name',
                             'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
-                            'productTypeVariant.firstVariantOption.image'
+                            'productTypeVariant.firstVariantOption',
+                            'firstProductSku.mainImage:image_id,imageable_id,imageable_type,image_url,isMain'
                         ])
                         ->take(4);
                 }
             ])
             ->get();
-
         return response()->json([
             'categories' => new CategoryCollectionResource($categories)
+            // 'categories' => $categories
         ]);
     }
 

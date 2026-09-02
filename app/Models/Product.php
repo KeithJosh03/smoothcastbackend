@@ -15,18 +15,13 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Product extends Model
 {
-    public $timestamps = false;
+    public $timestamps = true;
     protected $primaryKey = 'product_id';
     protected $fillable = [
-        'brand_id',
-        'category_id',
-        'sub_category_id',
-        'product_title',
-        'base_price',
-        'description',
-        'features',
-        'specifications',
-        'release_date'
+        'brand_id', 'category_id', 'sub_category_id', 
+        'product_title', 'base_price', 'description', 
+        'features', 'specifications', 'release_date',
+        'sku', 'stock_quantity'
     ];
 
     public function brand(): BelongsTo
@@ -39,7 +34,7 @@ class Product extends Model
         return $this->belongsTo(Category::class , 'category_id');
     }
 
-    public function subCategories(): BelongsTo
+    public function subCategory(): BelongsTo
     {
         return $this->belongsTo(SubCategory::class , 'sub_category_id');
     }
@@ -55,7 +50,17 @@ class Product extends Model
             ->orderBy('variant_type_id');
     }
 
-    public function setupItems()
+    public function productSkus(): HasMany
+    {
+        return $this->hasMany(ProductSku::class, 'product_id', 'product_id');
+    }
+
+    public function firstProductSku(): HasOne
+    {
+        return $this->hasOne(ProductSku::class, 'product_id', 'product_id')->orderBy('sku_id', 'asc');
+    }
+
+    public function setupItems(): HasMany
     {
         return $this->hasMany(SetupItems::class , 'product_id', 'product_id');
     }

@@ -15,7 +15,7 @@ class ProductVariantType extends Model
     protected $primaryKey = 'variant_type_id';
     protected $fillable = [
         'product_id',
-        'variant_type_name',
+        'variant_name',
     ];
 
     public function product(): BelongsTo

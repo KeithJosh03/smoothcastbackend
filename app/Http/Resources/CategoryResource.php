@@ -10,6 +10,7 @@ class CategoryResource extends JsonResource {
         return [
             'categoryId'   => $this->category_id,
             'categoryName' => $this->category_name,
+            'subcategoriesCount' => $this->sub_categories_count ?? 0,
         ];
     }
 }

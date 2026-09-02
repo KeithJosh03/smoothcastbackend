@@ -12,6 +12,7 @@ class BrandResource extends JsonResource
         return [
             'brandId' => $this->brand_id,
             'brandName' => $this->brand_name,
+            'linkedProducts' => $this->brand_products_count ?? 0,
             'imageUrl' => $this->whenLoaded('image', function () {
             return $this->image->image_url ?? null;
         }),

@@ -151,6 +151,7 @@ class BrandController extends Controller
     public function brandLogo()
     {
         $brands = Brand::with('image') // eager load image
+            ->withCount('brandProducts')
             ->whereHas('image', function ($query) {
             $query->whereNotNull('image_url');
         })

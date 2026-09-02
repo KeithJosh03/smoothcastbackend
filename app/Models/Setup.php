@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Setups extends Model
+class Setup extends Model
 {
     public $timestamps = false;
     protected $primaryKey = 'setup_id';
@@ -17,13 +17,8 @@ class Setups extends Model
         'description'
     ];
 
-    public function setupItems(): HasMany
+    public function items(): HasMany
     {
-        return $this->hasMany(SetupItems::class , 'setup_id', 'setup_id');
-    }
-
-    public function setupItemVariants(): HasMany
-    {
-        return $this->hasMany(SetupItemVariant::class , 'setup_id', 'setup_id');
+        return $this->hasMany(SetupItem::class, 'setup_id', 'setup_id');
     }
 }
