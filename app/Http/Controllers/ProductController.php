@@ -554,13 +554,18 @@ class ProductController extends Controller
 
     public function productSearch(Request $request)
     {
-        $productname = $request->query('productTitle');
-        $products = Product::whereRaw(
-            'LOWER(product_title) LIKE ?',
-            ['%' . strtolower($productname) . '%']
-        )
-            ->select('product_id', 'product_title')
-            ->get();
+        $productname = trim($request->query('productTitle', ''));
+
+        $query = Product::select('product_id', 'product_title');
+
+        if (empty($productname)) {
+            $products = $query->inRandomOrder()->limit(10)->get();
+        } else {
+            $products = $query->whereRaw(
+                'LOWER(product_title) LIKE ?',
+                ['%' . strtolower($productname) . '%']
+            )->get();
+        }
 
         return response()->json([
             'status' => true,
@@ -571,7 +576,6 @@ class ProductController extends Controller
     // Dashboard Product API
     public function productListDashBoardSearch(Request $request)
     {
-
         $search = $request->query('productTitle');
         $brandId = $request->query('brandId');
         $categoryId = $request->query('categoryId');
@@ -602,7 +606,7 @@ class ProductController extends Controller
             ->with([
                 'category:category_id,category_name',
                 'brand:brand_id,brand_name',
-                'subCategories:sub_category_id,sub_category_name',
+                'subCategory:sub_category_id,sub_category_name',
                 'productTypeVariant:product_id,variant_type_id,variant_name',
                 'productSkus' => function ($query) {
                     $query->where('is_active', true)
