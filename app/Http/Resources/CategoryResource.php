@@ -11,6 +11,8 @@ class CategoryResource extends JsonResource {
             'categoryId'   => $this->category_id,
             'categoryName' => $this->category_name,
             'subcategoriesCount' => $this->sub_categories_count ?? 0,
+            'isActive' => $this->is_active ?? true,
+            'sortOrder' => $this->sort_order ?? 0,
         ];
     }
 }

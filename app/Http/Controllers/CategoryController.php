@@ -18,7 +18,10 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $categories = Category::withCount('subCategories')->get();
+        $categories = Category::withCount('subCategories')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('category_id', 'asc')
+            ->get();
         return response()->json([
             'status' => true,
             'categories' => CategoryResource::collection($categories)
@@ -33,12 +36,12 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'category_name' => ['required', 'string', 'max:100']
+            'category_name' => ['required', 'string', 'max:100'],
+            'is_active' => ['sometimes', 'boolean'],
+            'sort_order' => ['sometimes', 'integer']
         ]);
 
-        $category = Category::create([
-            'category_name' => $validated['category_name']
-        ]);
+        $category = Category::create($validated);
         return response()->json(new CategoryResource($category), Response::HTTP_CREATED);
     }
 
@@ -54,12 +57,14 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
-            'category_name' => ['required', 'string', 'max:100'],
+            'category_name' => ['sometimes', 'required', 'string', 'max:100'],
+            'is_active' => ['sometimes', 'boolean'],
+            'sort_order' => ['sometimes', 'integer'],
         ]);
 
         $category->update($validated);
 
-        return response()->json(new CategoryResource($category));
+        return response()->json(new CategoryResource($category->loadCount('subCategories')));
     }
 
     public function destroy(Category $category)
@@ -68,7 +73,35 @@ class CategoryController extends Controller
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function categoryproductcollection()
+    public function toggleStatus(Request $request, $id)
+    {
+        $category = Category::withCount('subCategories')->findOrFail($id);
+        $validated = $request->validate([
+            'is_active' => ['sometimes', 'boolean']
+        ]);
+
+        $newStatus = array_key_exists('is_active', $validated) ? $validated['is_active'] : !$category->is_active;
+        $category->update(['is_active' => $newStatus]);
+
+        return response()->json(new CategoryResource($category));
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'orders' => ['required', 'array'],
+            'orders.*.id' => ['required'],
+            'orders.*.sort_order' => ['required', 'integer']
+        ]);
+
+        foreach ($validated['orders'] as $item) {
+            Category::where('category_id', $item['id'])->update(['sort_order' => $item['sort_order']]);
+        }
+
+        return response()->json(['status' => true, 'message' => 'Categories reordered successfully']);
+    }
+
+    public function categoryProductCollection()
     {
         $categories = Category::select('category_id', 'category_name')
             ->with([
@@ -101,7 +134,7 @@ class CategoryController extends Controller
 
 
 
-    public function specificCategory($categoryname, Request $request)
+    public function specificCategoryProduct($categoryname, Request $request)
     {
         $perPage = 15;
         $page = $request->get('page', 1);
@@ -120,7 +153,7 @@ class CategoryController extends Controller
             ->select('base_price', 'product_id', 'brand_id', 'sub_category_id', 'product_title')
             ->with([
                 'brand:brand_id,brand_name',
-                'subCategories:sub_category_id,sub_category_name',
+                'subCategory:sub_category_id,sub_category_name',
                 'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
                 'productTypeVariantFirst.firstVariantOption.image'
             ])
@@ -156,7 +189,9 @@ class CategoryController extends Controller
     public function categorySub($categoryId)
     {
         $category = Category::where('category_id', $categoryId)
-            ->with('subCategories:category_id,sub_category_id,sub_category_name')
+            ->with(['subCategories' => function($q) {
+                $q->orderBy('sort_order', 'asc')->orderBy('sub_category_id', 'asc');
+            }])
             ->first();
 
         if (!$category) {
@@ -169,8 +204,6 @@ class CategoryController extends Controller
         return response()->json([
             'status' => true,
             'categorySubs' => CategorySubResource::collection($category->subCategories)
-            // 'categorySub' => $category
-
         ]);
     }
 
@@ -178,7 +211,9 @@ class CategoryController extends Controller
     public function subCatByCategoryId($categoryId)
     {
         $category = Category::where('category_id', $categoryId)
-            ->with('subcategories:category_id,sub_category_id,sub_category_name')
+            ->with(['subCategories' => function($q) {
+                $q->orderBy('sort_order', 'asc')->orderBy('sub_category_id', 'asc');
+            }])
             ->first();
 
         if (!$category) {
@@ -190,8 +225,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'status' => true,
-            // 'categorySub' => new CategorySubResource($category) 
-            'categorySub' => SubCategoryResource::collection($category->subcategories)
+            'categorySub' => SubCategoryResource::collection($category->subCategories)
         ]);
     }
 }

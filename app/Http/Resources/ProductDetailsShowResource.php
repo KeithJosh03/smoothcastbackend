@@ -19,8 +19,21 @@ class ProductDetailsShowResource extends JsonResource
             'specifications'   => $this->specifications,
             'features'         => $this->features,
             'description'      => $this->description,
+            'brand' => [
+                'brandId' => $this->brand_id,
+                'brandName' => $this->brand->brand_name ?? null,
+            ],
+            'category' => [
+                'categoryId' => $this->category_id,
+                'categoryName' => $this->category->category_name ?? null,
+            ],
+            'subCategory' => [
+                'subCategoryId' => $this->sub_category_id,
+                'subCategoryName' => $this->subCategories->sub_category_name ?? $this->subCategory->sub_category_name ?? null,
+            ],
             'brandName'        => $this->brand->brand_name ?? null,
-            'subCategoryName'  => $this->subCategories->sub_category_name ?? null,
+            'categoryName'     => $this->category->category_name ?? null,
+            'subCategoryName'  => $this->subCategories->sub_category_name ?? $this->subCategory->sub_category_name ?? null,
             'hasVariants'      => $hasVariants,
             
             // SIMPLE PRODUCT INVENTORY DATA
@@ -31,10 +44,16 @@ class ProductDetailsShowResource extends JsonResource
                                     : ((int)$this->stock_quantity > 0),
 
             // Global Media Gallery
-            'productMedias'    => $this->images->map(fn($img) => [
-                'imageUrl' => $img->image_url,
-                'isMain'   => (bool)$img->isMain,
-            ]),
+            'productMedias'    => $this->images->map(function($img) {
+                $url = $img->image_url;
+                if (!empty($url) && !str_starts_with($url, 'http://') && !str_starts_with($url, 'https://') && !str_starts_with($url, '/')) {
+                    $url = asset('storage/' . ltrim($url, '/'));
+                }
+                return [
+                    'imageUrl' => $url,
+                    'isMain'   => (bool)$img->isMain,
+                ];
+            }),
 
             // Variant Options UI Pills
             'productVariants'  => $this->productTypeVariant->map(fn($type) => [

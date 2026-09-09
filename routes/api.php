@@ -25,20 +25,26 @@ Route::post('/imageupload/uploads', [ImageUploadController::class, 'upload']);
 // BRANDS API
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
 Route::get('/brands/brandlogo/', [BrandController::class, 'brandLogo']);
-Route::get('/brands/brandNameList/', [BrandController::class, 'BrandNameList']);
+Route::get('/brands/brandNameListSearchHeader/', [BrandController::class, 'BrandNameListSearchHeader']);
 Route::put('/brands/{brand}', [BrandController::class, 'update']);
 
 // CATEGORIES API
-Route::get('/categories/specificCategory/{categoryname}', [CategoryController::class, 'specificCategory']);
-Route::get('/categories/categorycollection', [CategoryController::class, 'categoryproductcollection']);
+Route::get('/categories/specificCategory/{categoryname}', [CategoryController::class, 'specificCategoryProduct']);
+Route::get('/categories/categorycollection', [CategoryController::class, 'categoryProductCollection']);
 Route::get('/categories/categorysub/{categoryId}', [CategoryController::class, 'categorySub']);
 Route::get('/categories/SubCatByCategoryId/{categoryId}', [CategoryController::class, 'subCatByCategoryId']);
+Route::post('/categories/reorder', [CategoryController::class, 'reorder']);
+Route::patch('/categories/{id}/status', [CategoryController::class, 'toggleStatus']);
+Route::post('/subcategory/reorder', [SubCategoryController::class, 'reorder']);
+Route::post('/subcategories/reorder', [SubCategoryController::class, 'reorder']);
+Route::patch('/subcategory/{id}/status', [SubCategoryController::class, 'toggleStatus']);
+Route::patch('/subcategories/{id}/status', [SubCategoryController::class, 'toggleStatus']);
 
 // PRODUCTS API
 Route::get('/products/check-sku', [ProductController::class, 'checkSku']);
 Route::get('/products/productsearchinitial/{productname}', [ProductController::class, 'productDetailInitial']);
 Route::get('/products/newarrival/', [ProductController::class, 'newArrivals']);
-Route::get('/products/productdetail/{productId}', [ProductController::class, 'productSpecificDetail']);
+Route::get('/products/productviewdetails/{productId}', [ProductController::class, 'productViewDetails']);
 Route::get('/products/productdetailEditDashboard/{productId}', [ProductController::class, 'ProductDetailsEditDashboard']);
 Route::get('/products/productsearch', [ProductController::class, 'productSearch']);
 
@@ -74,10 +80,17 @@ Route::apiResource('reviews', ReviewController::class)->only(['index', 'store', 
 // ADMIN PROTECTED ROUTES
 Route::middleware(['auth:sanctum', EnsureUserIsAdmin::class])->group(function () {
     Route::prefix('admin')->group(function () {
-
+        Route::patch('categories/{id}/status', [CategoryController::class, 'toggleStatus']);
+        Route::post('categories/reorder', [CategoryController::class, 'reorder']);
+        Route::patch('subcategories/{id}/status', [SubCategoryController::class, 'toggleStatus']);
+        Route::post('subcategories/reorder', [SubCategoryController::class, 'reorder']);
     });
 
     Route::apiResource('brands', BrandController::class)->only(['store', 'update', 'destroy']);
     Route::apiResource('categories', CategoryController::class)->only(['store', 'update', 'destroy']);
     Route::apiResource('subcategory', SubCategoryController::class)->only(['store', 'update', 'destroy']);
+    Route::patch('categories/{id}/status', [CategoryController::class, 'toggleStatus']);
+    Route::post('categories/reorder', [CategoryController::class, 'reorder']);
+    Route::patch('subcategory/{id}/status', [SubCategoryController::class, 'toggleStatus']);
+    Route::post('subcategory/reorder', [SubCategoryController::class, 'reorder']);
 });

@@ -150,27 +150,25 @@ class BrandController extends Controller
 
     public function brandLogo()
     {
-        $brands = Brand::with('image') // eager load image
+        $brands = Brand::with('image') 
             ->withCount('brandProducts')
             ->whereHas('image', function ($query) {
             $query->whereNotNull('image_url');
         })
             ->get();
-
         if ($brands->isEmpty()) {
             return response()->json([
                 'status' => true,
                 'brandLogo' => []
             ]);
         }
-
         return response()->json([
             'status' => true,
             'brandLogo' => BrandResource::collection($brands)
         ]);
     }
 
-    public function BrandNameList()
+    public function BrandNameListSearchHeader()
     {
         $brands = Brand::get(['brand_id', 'brand_name']);
         return response()->json([
