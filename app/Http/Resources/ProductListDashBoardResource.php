@@ -13,7 +13,8 @@ class ProductListDashBoardResource extends JsonResource
             'productTitle' => $this->product_title,
             'basePrice' => $this->base_price,
             'brandName' => $this->brand->brand_name ?? null,
-            'subCategoryName' => $this->subCategories->sub_category_name ?? null,
+            'categoryName' => $this->category->category_name ?? null,
+            'subCategoryName' => $this->subCategory->sub_category_name ?? null,
             'productTypeVariant' => ($this->productTypeVariant ?? collect())->map(function ($variant) {
                 return [
                     'variantTypeName' => $variant->variant_type_name,

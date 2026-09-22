@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 use App\Http\Resources\BrandSpecificProducts;
+use App\Http\Resources\BrandSpecificProductsCollection;
 use App\Http\Resources\BrandResource;
 
 
@@ -112,7 +113,7 @@ class BrandController extends Controller
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function specificbrand($brandname, Request $request)
+    public function specificBrand($brandname, Request $request)
     {
         $perPage = 12; // Products per page
         $page = $request->get('page', 1);
@@ -126,20 +127,69 @@ class BrandController extends Controller
             ], 404);
         }
 
-        $brandproducts = $brand->brandProducts()
+        $search = $request->get('search');
+        $budget = $request->get('budget');
+        $sort = $request->get('sort', 'newest');
+
+        $query = $brand->brandProducts()
+            ->select(
+                'products.product_id',
+                'products.product_title',
+                'products.base_price',
+                'products.brand_id',
+                'products.sub_category_id',
+                'products.category_id'
+            )
+            ->selectSub(function ($q) {
+                $q->from('product_skus')
+                    ->whereColumn('product_skus.product_id', 'products.product_id')
+                    ->selectRaw('MIN(price)');
+            }, 'min_variant_price')
+            ->selectSub(function ($q) {
+                $q->from('product_skus')
+                    ->whereColumn('product_skus.product_id', 'products.product_id')
+                    ->selectRaw('MAX(price)');
+            }, 'max_variant_price')
             ->with([
-            'categorytype:type_name,type_id',
-            'productVariants:product_id,variant_id,full_model_name,product_price',
-            'productVariants.discountsVariants:variant_id,discount_type,discount_value',
-            'productVariants.mainImage:variant_id,url',
-        ])
-            ->paginate($perPage, ['*'], 'page', $page);
+                'category:category_id,category_name',
+                'subCategory:sub_category_id,sub_category_name',
+                // Direct product media / main image
+                'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
+                // Fallback 1: SKU-level images
+                'firstProductSku.mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
+                // Fallback 2: Variant options / attributes level images
+                'productTypeVariantFirst.firstVariantOption.image',
+            ]);
+
+        if (!empty($search)) {
+            $query->where('products.product_title', 'like', "%{$search}%");
+        }
+
+        if (!empty($budget) && is_numeric($budget)) {
+            $query->where('products.base_price', '<=', $budget);
+        }
+
+        switch ($sort) {
+            case 'price_low':
+                $query->orderBy('products.base_price', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('products.base_price', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('products.product_id', 'desc');
+                break;
+        }
+
+        $brandproducts = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'status' => true,
             'brandImage' => $brand->image_url,
             'brandId' => $brand->brand_id,
-            'products' => BrandSpecificProducts::collection($brandproducts->items()),
+            'brandName' => $brand->brand_name,
+            'products' => new BrandSpecificProductsCollection($brandproducts),
             'currentPage' => $brandproducts->currentPage(),
             'lastPage' => $brandproducts->lastPage(),
             'hasMore' => $brandproducts->hasMorePages()

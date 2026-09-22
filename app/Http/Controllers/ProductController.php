@@ -333,7 +333,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function productlistdashboardsearch(Request $request)
+    public function productListDashboardSearch(Request $request)
     {
         $query = Product::with(['category', 'subCategory', 'brand', 'images']);
 

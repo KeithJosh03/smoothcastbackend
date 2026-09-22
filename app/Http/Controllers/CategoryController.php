@@ -186,8 +186,11 @@ class CategoryController extends Controller
             ], 404);
         }
 
-        $products = $category
-            ->products()
+        $search = $request->get('search');
+        $budget = $request->get('budget');
+        $sort = $request->get('sort', 'newest');
+
+        $query = $category->products()
             ->select(
                 'products.product_id',
                 'products.product_title',
@@ -195,13 +198,11 @@ class CategoryController extends Controller
                 'products.brand_id',
                 'products.sub_category_id'
             )
-            // Subquery minimum variant price from product_skus
             ->selectSub(function ($q) {
                 $q->from('product_skus')
                 ->whereColumn('product_skus.product_id', 'products.product_id')
                 ->selectRaw('MIN(price)');
             }, 'min_variant_price')
-            // Subquery maximum variant price from product_skus
             ->selectSub(function ($q) {
                 $q->from('product_skus')
                 ->whereColumn('product_skus.product_id', 'products.product_id')
@@ -210,11 +211,38 @@ class CategoryController extends Controller
             ->with([
                 'brand:brand_id,brand_name',
                 'subCategory:sub_category_id,sub_category_name',
+                // Direct product media / main image
                 'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
+                // Fallback 1: SKU-level images
                 'firstProductSku.mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
-                'productTypeVariantFirst.firstVariantOption.image'
-            ])
-            ->paginate($perPage, ['*'], 'page', $page);
+                // Fallback 2: Variant options / attributes level images
+                'productTypeVariantFirst.firstVariantOption.image',
+                // Additional safety if your collection checks all SKUs or variant types
+                'productSkus.mainImage',
+            ]);
+
+        if (!empty($search)) {
+            $query->where('products.product_title', 'like', "%{$search}%");
+        }
+
+        if (!empty($budget) && is_numeric($budget)) {
+            $query->where('products.base_price', '<=', $budget);
+        }
+
+        switch ($sort) {
+            case 'price_low':
+                $query->orderBy('products.base_price', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('products.base_price', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('products.product_id', 'desc');
+                break;
+        }
+
+        $products = $query->paginate($perPage, ['*'], 'page', $page);
 
         if ($products->isEmpty()) {
             return response()->json([

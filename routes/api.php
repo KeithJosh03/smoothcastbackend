@@ -33,7 +33,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/auth/social-callback', [AuthController::class, 'register']);
 
 // BRANDS (Public)
-Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
+Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificBrand']);
 Route::get('/brands/brandlogo', [BrandController::class, 'brandLogo']);
 Route::get('/brands/brandNameListSearchHeader', [BrandController::class, 'BrandNameListSearchHeader']);
 
@@ -50,7 +50,7 @@ Route::get('/promotions/active', [PromotionController::class, 'activePromotions'
 // PRODUCTS (Custom public endpoints must precede resource routes)
 Route::get('/products/check-sku', [ProductController::class, 'checkSku']);
 Route::get('/products/productsearch', [ProductController::class, 'productsearch']);
-Route::get('/products/productlistdashboardsearch', [ProductController::class, 'productlistdashboardsearch']);
+Route::get('/products/productlistdashboardsearch', [ProductController::class, 'productListDashboardSearch']);
 Route::get('/products/productdetailEditDashboard/{productId}', [ProductController::class, 'ProductDetailsEditDashboard']);
 Route::get('/products/productviewdetails/{id}', [ProductController::class, 'productViewDetails']);
 Route::post('/products/validate-sku', [ProductController::class, 'validateSku']);
