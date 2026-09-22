@@ -170,10 +170,12 @@ class BrandController extends Controller
 
     public function BrandNameListSearchHeader()
     {
-        $brands = Brand::get(['brand_id', 'brand_name']);
+        $brands = \Cache::remember('header_brands_list', 86400, function () {
+            return Brand::get(['brand_id', 'brand_name']);
+        });
         return response()->json([
             'status' => true,
-            'brands' => BrandResource::collection($brands)
+            'data' => BrandResource::collection($brands)
         ]);
     }
 

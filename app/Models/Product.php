@@ -81,5 +81,36 @@ class Product extends Model
         return $query->orderBy('release_date', 'desc')->limit(8);
     }
 
+    public function promotions(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Promotion::class,
+            'promotion_product',
+            'product_id',
+            'promotion_id'
+        );
+    }
+
+    public function getActivePromotionAttribute(): ?Promotion
+    {
+        return Promotion::currentlyActive()
+            ->where(function ($query) {
+                // 1. Applies store-wide
+                $query->where('apply_to', 'ALL')
+                // 2. Applies to this product's category
+                ->orWhere(function ($q) {
+                    $q->where('apply_to', 'CATEGORY')
+                    ->whereHas('categories', fn($c) => $c->where('categories.category_id', $this->category_id));
+                })
+                // 3. Directly targets this specific product
+                ->orWhere(function ($q) {
+                    $q->where('apply_to', 'PRODUCT')
+                    ->whereHas('products', fn($p) => $p->where('products.product_id', $this->product_id));
+                });
+            })
+            ->orderBy('discount_value', 'desc') // Gives priority to larger discounts
+            ->first();
+    }
+
 
 }

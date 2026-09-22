@@ -14,12 +14,15 @@ class ImageUploadController extends Controller
             'files' => 'required|array',
             'files.*' => 'image|mimes:jpg,jpeg,png,gif,bmp,webp|max:5120',
             'originIndex' => 'required|array',
-            'originIndex.*' => 'required|integer',
         ]);
+        
         $uploaded = [];
+        $files = $request->file('files');
+        $originIndexes = $request->input('originIndex', []);
 
-        foreach ($request->file('files') as $i => $file) {
-            $originIndex = (int) $request->originIndex[$i];
+        foreach ($files as $key => $file) {
+            // Safely fetch originIndex matching the specific file key
+            $originIndex = isset($originIndexes[$key]) ? (int) $originIndexes[$key] : (int) $key;
 
             $name = Str::random(40) . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('uploads', $name, 'public');
@@ -31,6 +34,7 @@ class ImageUploadController extends Controller
         }
 
         return response()->json([
+            'status' => true,
             'files' => $uploaded
         ]);
     }

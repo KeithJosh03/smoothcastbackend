@@ -11,17 +11,19 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Resources\ProductDetailsResource;
 use App\Http\Resources\ProductSearchResource;
 use App\Http\Resources\ProductListDashBoardResource;
-use App\Http\Resources\NewArrivalResource;
 use App\Http\Resources\ProductDetailsShowResource;
+use App\Http\Resources\ProductCustomerViewResource;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::get();
+        $perPage = (int) $request->query('per_page', 15);
+        $products = Product::paginate($perPage);
+
         return response()->json([
-            'status' => true,
-            'products' => $products
+            'status'   => true,
+            'products' => $products,
         ]);
     }
 
@@ -30,31 +32,41 @@ class ProductController extends Controller
         $hasVariants = $request->has('variants') && is_array($request->input('variants')) && count($request->input('variants')) > 0;
 
         $validated = $request->validate([
-            'product_title'             => 'required|string|max:255',
-            'base_price'                => $hasVariants ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
-            'description'               => 'required|string',
-            'features'                  => 'nullable|string',
-            'specifications'            => 'nullable|string',
-            'category_id'               => 'required|exists:categories,category_id',
-            'sub_category_id'           => 'nullable|exists:sub_categories,sub_category_id',
-            'brand_id'                  => 'nullable|exists:brands,brand_id',
-            'sku'                       => $hasVariants ? 'nullable|string' : 'nullable|string|unique:products,sku',
-            'stock_quantity'            => 'nullable|integer',
-            'medias'                    => 'nullable|array',
-            'medias.*.url'              => 'nullable|string',
-            'medias.*.file'             => 'nullable|string',
-            'medias.*.isMain'           => 'nullable|boolean',
-            'variants'                  => 'nullable|array',
-            'variant_matrix'            => 'nullable|array',
-            'variant_matrix.*.sku_code' => 'required_with:variant_matrix|string|distinct|unique:product_skus,sku_code'
+            'product_title'                                   => 'required|string|max:255',
+            'base_price'                                      => $hasVariants ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
+            'description'                                     => 'required|string',
+            'features'                                        => 'nullable|string',
+            'specifications'                                  => 'nullable|string',
+            'category_id'                                     => 'required|exists:categories,category_id',
+            'sub_category_id'                                 => 'nullable|exists:sub_categories,sub_category_id',
+            'brand_id'                                        => 'nullable|exists:brands,brand_id',
+            'sku'                                             => $hasVariants ? 'nullable|string' : 'nullable|string|unique:products,sku',
+            'stock_quantity'                                  => $hasVariants ? 'nullable|integer' : 'nullable|integer|min:0',
+            'medias'                                          => 'nullable|array',
+            'medias.*.url'                                    => 'nullable|string',
+            'medias.*.file'                                   => 'nullable|string',
+            'medias.*.isMain'                                 => 'nullable|boolean',
+            'variants'                                        => 'nullable|array',
+            'variants.*.variantTypeName'                      => 'nullable|string',
+            'variants.*.variantOptions'                       => 'nullable|array',
+            'variants.*.variantOptions.*.variantOptionValue' => 'nullable|string',
+            'variants.*.variantOptions.*.variant_image'      => 'nullable|string',
+            'variants.*.variantOptions.*.imageUrl'           => 'nullable|string',
+            'variant_matrix'                                  => 'nullable|array',
+            'variant_matrix.*.sku_code'                       => 'required_with:variant_matrix|string|distinct|unique:product_skus,sku_code',
+            'variant_matrix.*.price'                          => 'required_with:variant_matrix|numeric|min:0',
+            'variant_matrix.*.stock_quantity'                 => 'required_with:variant_matrix|integer|min:0',
+            'variant_matrix.*.image_url'                      => 'nullable|string',
+            'variant_matrix.*.variant_option_ids'              => 'nullable|array',
+            'variant_matrix.*.variant_option_values'          => 'nullable|array'
         ]);
 
         return DB::transaction(function () use ($validated, $hasVariants) {
-            $masterSku = !empty($validated['sku'])
-                ? $validated['sku']
-                : (!$hasVariants
-                    ? 'SKU-' . strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['product_title']), 0, 4)) . '-' . strtoupper(substr(md5(uniqid()), 0, 4))
-                    : null);
+            $masterSku = $hasVariants 
+                ? null 
+                : (!empty($validated['sku']) 
+                    ? $validated['sku'] 
+                    : 'SKU-' . strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['product_title']), 0, 4)) . '-' . strtoupper(substr(md5(uniqid()), 0, 4)));
 
             $product = Product::create([
                 'product_title'   => $validated['product_title'],
@@ -81,50 +93,80 @@ class ProductController extends Controller
         });
     }
 
-    public function show(Product $product)
+    public function show($id)
     {
-        return $this->productSpecificDetail($product->product_id);
+        $product = Product::with([
+            'category',
+            'subCategory',
+            'brand',
+            'images',
+            'productTypeVariant.variantOptions.image',
+            'productSkus.variantOptions',
+            'productSkus.images'
+        ])->find($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data'   => new ProductDetailsResource($product)
+        ]);
     }
 
-    public function edit(Product $product)
+    public function update(Request $request, $id)
     {
-        return $this->productSpecificDetail($product->product_id);
-    }
+        $product = Product::findOrFail($id);
+        $hasVariants = $request->has('variants') && is_array($request->input('variants')) && count($request->input('variants')) > 0;
 
-    public function update(Request $request, $productId)
-    {
-        $product = Product::findOrFail($productId);
+        // Fetch current SKU IDs so validation rule won't block current matrix SKUs being updated
+        $currentSkuIds = $product->productSkus()->pluck('sku_id')->toArray();
 
-        $hasVariants = $request->has('variants') 
-            && is_array($request->input('variants')) 
-            && count($request->input('variants')) > 0;
-
-        // 1. Validation
         $validated = $request->validate([
-            'product_title'             => 'required|string|max:255',
-            'base_price'                => $hasVariants ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
-            'description'               => 'required|string',
-            'features'                  => 'nullable|string',
-            'specifications'            => 'nullable|string',
-            'category_id'               => 'required|exists:categories,category_id',
-            'sub_category_id'           => 'nullable|exists:sub_categories,sub_category_id',
-            'brand_id'                  => 'nullable|exists:brands,brand_id',
-            'sku'                       => $hasVariants ? 'nullable|string' : 'required|string|unique:products,sku,' . $product->product_id . ',product_id',
-            'stock_quantity'            => $hasVariants ? 'nullable|integer' : 'required|integer|min:0',
-            'medias'                    => 'nullable|array',
-            'medias.*.url'              => 'nullable|string',
-            'medias.*.file'             => 'nullable|string',
-            'medias.*.isMain'           => 'nullable|boolean',
-            'variants'                  => 'nullable|array',
-            'variant_matrix'            => 'nullable|array',
-            'variant_matrix.*.sku_code' => 'required_with:variant_matrix|string|distinct',
-            'variant_matrix.*.price'    => 'required_with:variant_matrix|numeric|min:0',
-            'variant_matrix.*.stock_quantity' => 'required_with:variant_matrix|integer|min:0',
+            'product_title'                                   => 'required|string|max:255',
+            'base_price'                                      => $hasVariants ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
+            'description'                                     => 'required|string',
+            'features'                                        => 'nullable|string',
+            'specifications'                                  => 'nullable|string',
+            'category_id'                                     => 'required|exists:categories,category_id',
+            'sub_category_id'                                 => 'nullable|exists:sub_categories,sub_category_id',
+            'brand_id'                                        => 'nullable|exists:brands,brand_id',
+            'sku'                                             => $hasVariants ? 'nullable|string' : 'nullable|string|unique:products,sku,' . $product->product_id . ',product_id',
+            'stock_quantity'                                  => $hasVariants ? 'nullable|integer' : 'nullable|integer|min:0',
+            'medias'                                          => 'nullable|array',
+            'medias.*.url'                                    => 'nullable|string',
+            'medias.*.file'                                   => 'nullable|string',
+            'medias.*.isMain'                                 => 'nullable|boolean',
+            'variants'                                        => 'nullable|array',
+            'variants.*.variantTypeName'                      => 'nullable|string',
+            'variants.*.variantOptions'                       => 'nullable|array',
+            'variants.*.variantOptions.*.variantOptionValue' => 'nullable|string',
+            'variants.*.variantOptions.*.variant_image'      => 'nullable|string',
+            'variants.*.variantOptions.*.imageUrl'           => 'nullable|string',
+            'variant_matrix'                                  => 'nullable|array',
+            'variant_matrix.*.sku_code' => [
+                'required_with:variant_matrix',
+                'string',
+                'distinct',
+                \Illuminate\Validation\Rule::unique('product_skus', 'sku_code')->where(function ($query) use ($product) {
+                    return $query->where('product_id', '!=', $product->product_id);
+                }),
+            ],
+            'variant_matrix.*.price'                          => 'required_with:variant_matrix|numeric|min:0',
+            'variant_matrix.*.stock_quantity'                 => 'required_with:variant_matrix|integer|min:0',
+            'variant_matrix.*.image_url'                      => 'nullable|string',
+            'variant_matrix.*.variant_option_ids'              => 'nullable|array',
+            'variant_matrix.*.variant_option_values'          => 'nullable|array'
         ]);
 
-        return DB::transaction(function () use ($validated, $product, $hasVariants) {
+        return DB::transaction(function () use ($product, $validated, $hasVariants) {
+            $masterSku = $hasVariants 
+                ? null 
+                : (!empty($validated['sku']) 
+                    ? $validated['sku'] 
+                    : 'SKU-' . strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['product_title']), 0, 4)) . '-' . strtoupper(substr(md5(uniqid()), 0, 4)));
 
-            // 2. Update Master Product Info
             $product->update([
                 'product_title'   => $validated['product_title'],
                 'base_price'      => $validated['base_price'] ?? 0.00,
@@ -134,247 +176,226 @@ class ProductController extends Controller
                 'category_id'     => $validated['category_id'],
                 'sub_category_id' => $validated['sub_category_id'] ?? null,
                 'brand_id'        => $validated['brand_id'] ?? null,
-                // Simple Product: Keeps top-level SKU & Stock
-                // Variant Product: Sets top-level SKU & Stock to null
-                'sku'             => $hasVariants ? null : $validated['sku'],
-                'stock_quantity'  => $hasVariants ? null : $validated['stock_quantity'],
+                'sku'             => $masterSku,
+                'stock_quantity'  => $hasVariants ? null : ($validated['stock_quantity'] ?? 0),
             ]);
 
-            // 3. Update Product Images
-            if (isset($validated['medias'])) {
-                $product->images()->delete();
-                $this->saveImages($product, $validated['medias']);
-            }
-
-            // 4. Handle Variant Transition State Changes
-            if ($hasVariants) {
-                // Processing Variant Product -> Variant Product OR Simple -> Variant
-                $this->syncVariantsAndMatrix($product, $validated);
-            } else {
-                // Processing Variant Product -> Simple Product
-                // Soft-deactivate previous variant SKUs to preserve sales history integrity
-                foreach ($product->productSkus as $sku) {
-                    $sku->update(['is_active' => false]);
-                }
-            }
-
-            return response()->json([
-                'status'     => true,
-                'message'    => $hasVariants ? 'Variant product updated successfully.' : 'Simple product updated successfully.',
-                'product_id' => $product->product_id,
-            ]);
-        });
-    }
-
-    public function destroy($productId)
-    {
-        return DB::transaction(function () use ($productId) {
-            $product = Product::findOrFail($productId);
-            
-            // Delete related models to prevent foreign key issues
             $product->images()->delete();
-            foreach ($product->productTypeVariant as $vType) {
-                foreach ($vType->variantOptions as $vOpt) {
-                    $vOpt->image()->delete();
-                    $vOpt->delete();
-                }
-                $vType->delete();
-            }
-            foreach ($product->productSkus as $sku) {
-                $sku->variantOptions()->detach();
-                $sku->images()->delete();
-                $sku->delete();
-            }
-            
-            $product->delete();
-            return response()->json(null, 204);
+            $this->saveImages($product, $validated['medias'] ?? []);
+
+            $this->syncVariantsAndMatrix($product, $validated, $hasVariants);
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Product updated successfully.',
+            ]);
         });
     }
 
-    public function checkSku(Request $request)
+    public function destroy($id)
     {
-        $sku = trim($request->query('sku', ''));
-        $ignoreProductId = $request->query('ignore_product_id');
+        $product = Product::findOrFail($id);
 
-        if (empty($sku)) {
-            return response()->json([
-                'sku'       => $sku,
-                'available' => false,
-                'exists'    => false,
-                'message'   => 'SKU query parameter is required.'
-            ], 400);
-        }
+        DB::transaction(function () use ($product) {
+            $product->images()->delete();
 
-        $productQuery = Product::where('sku', $sku);
-        $variantQuery = ProductSku::where('sku_code', $sku);
+            $variantTypeIds = $product->productTypeVariant()->pluck('variant_type_id');
+            $optionIds = VariantOptions::whereIn('variant_type_id', $variantTypeIds)->pluck('variant_option_id');
+            
+            VariantOptions::whereIn('variant_option_id', $optionIds)->delete();
+            $product->productTypeVariant()->delete();
 
-        if (!empty($ignoreProductId)) {
-            $productQuery->where('product_id', '!=', $ignoreProductId);
-            $variantQuery->whereHas('product', function ($q) use ($ignoreProductId) {
-                $q->where('product_id', '!=', $ignoreProductId);
-            });
-        }
-
-        $exists = $productQuery->exists() || $variantQuery->exists();
-
-        return response()->json([
-            'sku'       => $sku,
-            'available' => !$exists,
-            'exists'    => $exists,
-            'message'   => !$exists ? 'SKU is available.' : 'SKU is already taken.'
-        ], 200);
-    }
-
-    public function productViewDetails($productId)
-    {
-        $productdetail = Product::select(
-            'product_id', 'sub_category_id', 'category_id', 'brand_id',
-            'product_title', 'base_price', 'description', 'features',
-            'specifications', 'sku', 'stock_quantity'
-        )
-        ->with([
-            'brand:brand_id,brand_name',
-            'subCategory:sub_category_name,sub_category_id',
-            'category:category_id,category_name',
-            'images',
-            'productTypeVariant:product_id,variant_type_id,variant_name',
-            'productTypeVariant.variantOptions:variant_type_id,variant_option_id,variant_value',
-            'productSkus' => function ($query) {
-                $query->where('is_active', true)
-                    ->select('sku_id', 'product_id', 'sku_code', 'price', 'stock_quantity', 'is_active')
-                    ->with(['images', 'variantOptions']);
+            $skuIds = $product->productSkus()->pluck('sku_id');
+            if ($skuIds->isNotEmpty()) {
+                DB::table('sku_variant_option')->whereIn('sku_id', $skuIds)->delete();
+                \App\Models\Image::where('imageable_type', ProductSku::class)
+                    ->whereIn('imageable_id', $skuIds)
+                    ->delete();
             }
-        ])
-        ->where('product_id', $productId)
-        ->first();
+            $product->productSkus()->delete();
 
-        if (!$productdetail) {
-            return response()->json([
-                'status' => true,
-                'productdetail' => null
-            ]);
-        }
+            $product->delete();
+        });
 
         return response()->json([
-            'status' => true,
-            'productdetail' => new ProductDetailsShowResource($productdetail)
-        ]);
-    }
-
-    public function productSearch(Request $request)
-    {
-        $productname = trim($request->query('productTitle', ''));
-        $query = Product::select('product_id', 'product_title');
-
-        if (empty($productname)) {
-            $products = $query->inRandomOrder()->limit(10)->get();
-        } else {
-            $products = $query->whereRaw('LOWER(product_title) LIKE ?', ['%' . strtolower($productname) . '%'])->get();
-        }
-
-        return response()->json([
-            'status' => true,
-            'products' => ProductSearchResource::collection($products)
-        ]);
-    }
-
-    public function productListDashBoardSearch(Request $request)
-    {
-        $search = $request->query('productTitle');
-        $brandId = $request->query('brandId');
-        $categoryId = $request->query('categoryId');
-
-        $query = Product::query()
-            ->when($search, fn($q) => $q->whereRaw('LOWER(product_title) LIKE ?', ['%' . strtolower($search) . '%']))
-            ->when($brandId, fn($q) => $q->where('brand_id', $brandId))
-            ->when($categoryId, fn($q) => $q->where('category_id', $categoryId))
-            ->select('product_id', 'product_title', 'base_price', 'category_id', 'sub_category_id', 'brand_id', 'sku', 'stock_quantity')
-            ->with([
-                'category:category_id,category_name',
-                'brand:brand_id,brand_name',
-                'subCategory:sub_category_id,sub_category_name',
-                'productTypeVariant:product_id,variant_type_id,variant_name',
-                'productSkus' => function ($query) {
-                    $query->where('is_active', true)
-                        ->select('sku_id', 'product_id', 'sku_code', 'price', 'stock_quantity', 'is_active')
-                        ->with(['variantOptions:variant_option_id,variant_value']);
-                }
-            ])
-            ->orderBy('product_id', 'desc');
-
-        $products = $query->paginate(10);
-
-        return response()->json([
-            'status' => true,
-            'products' => ProductListDashBoardResource::collection($products),
-            'pagination' => [
-                'current_page' => $products->currentPage(),
-                'last_page'    => $products->lastPage(),
-                'total'        => $products->total(),
-            ],
+            'status'  => true,
+            'message' => 'Product deleted successfully.'
         ]);
     }
 
     public function ProductDetailsEditDashboard($productId)
     {
-        $productdetail = Product::select(
-            'product_id',
-            'sub_category_id',
-            'category_id',
-            'brand_id',
-            'product_title',
-            'base_price',
-            'description',
-            'features',
-            'specifications',
-            'sku',            // <-- Needed for Simple Product SKU
-            'stock_quantity'  // <-- Needed for Simple Product Stock
-        )
-        ->with([
-            'brand',
-            'subCategory',
+        $product = Product::with([
             'category',
+            'subCategory.category',
+            'brand',
             'images',
             'productTypeVariant.variantOptions.image',
-            'productSkus' => function ($query) {
-                $query->where('is_active', true)
-                    ->with(['images', 'variantOptions']);
-            }
-        ])
-        ->where('product_id', $productId)
-        ->first();
+            'productSkus.product',
+            'productSkus.variantOptions',
+            'productSkus.images',
+        ])->find($productId);
 
-        if (!$productdetail) {
+        if (!$product) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Product not found',
-                'productdetail' => null
             ], 404);
         }
 
         return response()->json([
             'status' => true,
-            'productdetail' => new ProductDetailsResource($productdetail)
+            'data'   => new ProductDetailsShowResource($product),
+        ], 200);
+    }
+
+    public function productViewDetails($id)
+    {
+        $product = Product::with([
+            'category',
+            'brand',
+            'productSkus.variantOptions',
+        ])->find($id);
+
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Product not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data'   => new ProductCustomerViewResource($product),
+        ], 200);
+    }
+
+    public function checkSku(Request $request)
+    {
+        $sku = $request->query('sku');
+        $ignoreProductId = $request->query('ignore_product_id');
+
+        if (!$sku) {
+            return response()->json(['available' => false, 'message' => 'SKU query parameter is required.'], 400);
+        }
+
+        $queryInProducts = Product::where('sku', $sku);
+        $queryInSkus = ProductSku::where('sku_code', $sku);
+
+        if ($ignoreProductId) {
+            $queryInProducts->where('product_id', '!=', $ignoreProductId);
+            $queryInSkus->where('product_id', '!=', $ignoreProductId);
+        }
+
+        $exists = $queryInProducts->exists() || $queryInSkus->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'exists'    => $exists,
+            'message'   => $exists ? 'SKU is already taken.' : 'SKU is available.'
         ]);
     }
 
-    public function deleteProduct($productId)
+    public function validateSku(Request $request)
     {
-        return $this->destroy($productId);
+        $request->validate([
+            'baseSku'          => 'required|string',
+            'currentProductId' => 'nullable',
+        ]);
+
+        $baseSku = trim($request->input('baseSku'));
+        $currentProductId = $request->input('currentProductId');
+
+        $uniqueSku = $baseSku;
+        $counter = 1;
+        $exists = true;
+
+        while ($exists) {
+            $queryInProducts = Product::where('sku', $uniqueSku);
+            $queryInSkus = ProductSku::where('sku_code', $uniqueSku);
+
+            if ($currentProductId) {
+                $queryInProducts->where('product_id', '!=', $currentProductId);
+                $queryInSkus->where('product_id', '!=', $currentProductId);
+            }
+
+            if (!$queryInProducts->exists() && !$queryInSkus->exists()) {
+                $exists = false;
+            } else {
+                $counter++;
+                $uniqueSku = $baseSku . '-' . str_pad($counter, 2, '0', STR_PAD_LEFT);
+            }
+        }
+
+        return response()->json([
+            'sku'         => $uniqueSku,
+            'isAvailable' => $uniqueSku === $baseSku,
+        ]);
+    }
+
+    public function productlistdashboardsearch(Request $request)
+    {
+        $query = Product::with(['category', 'subCategory', 'brand', 'images']);
+
+        if ($request->filled('productTitle')) {
+            $query->where('product_title', 'LIKE', '%' . $request->productTitle . '%');
+        }
+
+        if ($request->filled('brandId')) {
+            $query->where('brand_id', $request->brandId);
+        }
+
+        if ($request->filled('categoryId')) {
+            $query->where('category_id', $request->categoryId);
+        }
+
+        $products = $query->paginate(10);
+
+        return response()->json([
+            'status'     => true,
+            'products'   => ProductListDashBoardResource::collection($products),
+            'pagination' => [
+                'total'        => $products->total(),
+                'per_page'     => $products->perPage(),
+                'current_page' => $products->currentPage(),
+                'last_page'    => $products->lastPage(),
+            ]
+        ]);
+    }
+
+    public function productsearch(Request $request)
+    {
+        $query = Product::with(['category', 'subCategory', 'brand', 'images']);
+
+        if ($request->filled('productTitle')) {
+            $query->where('product_title', 'LIKE', '%' . $request->productTitle . '%');
+        }
+
+        $products = $query->take(10)->get();
+
+        return response()->json([
+            'status'   => true,
+            'products' => ProductSearchResource::collection($products)
+        ]);
     }
 
     // --- Private Helper Methods ---
 
     private function saveImages($model, array $medias): void
     {
+        $records = [];
         foreach ($medias as $media) {
             $url = $media['url'] ?? $media['file'] ?? null;
             if (!empty($url) && is_string($url)) {
-                $model->images()->create([
+                $records[] = [
                     'image_url' => $url,
                     'isMain'    => $media['isMain'] ?? false,
-                ]);
+                ];
             }
+        }
+
+        if (!empty($records)) {
+            $model->images()->createMany($records);
         }
     }
 
@@ -385,49 +406,51 @@ class ProductController extends Controller
         }
 
         $optionValueMap = [];
-        $positionalOptionMap = [];
 
         if (!empty($validated['variants'])) {
-            foreach ($validated['variants'] as $vIndex => $vData) {
+            foreach ($validated['variants'] as $vData) {
                 $variantType = $product->productTypeVariant()->create([
                     'variant_name' => $vData['variantTypeName'] ?? '',
                 ]);
 
                 if (!empty($vData['variantOptions'])) {
-                    foreach ($vData['variantOptions'] as $optIndex => $optData) {
+                    foreach ($vData['variantOptions'] as $optData) {
+                        $optionValue = $optData['variantOptionValue'] ?? '';
                         $option = $variantType->variantOptions()->create([
-                            'variant_value' => $optData['variantOptionValue'] ?? '',
+                            'variant_value' => $optionValue,
                         ]);
 
-                        if (!empty($optData['variant_image']) && is_string($optData['variant_image'])) {
+                        $optImg = $optData['variant_image'] ?? $optData['imageUrl'] ?? null;
+                        if (!empty($optImg) && is_string($optImg)) {
                             $option->image()->create([
-                                'image_url' => $optData['variant_image'],
+                                'image_url' => $optImg,
                                 'isMain'    => true,
                             ]);
                         }
 
-                        $optionValueMap[$optData['variantOptionValue']] = $option->variant_option_id;
-                        $positionalOptionMap[$vIndex][$optIndex + 1] = $option->variant_option_id;
+                        if (!empty($optionValue)) {
+                            $optionValueMap[strtolower(trim($optionValue))] = $option->variant_option_id;
+                        }
                     }
                 }
             }
         }
 
         if (!empty($validated['variant_matrix'])) {
-            // Bulk fetch numeric IDs to eliminate N+1 queries
-            $numericIds = [];
+            // Collect fallback option IDs for single batch existence query
+            $allPossibleIds = [];
             foreach ($validated['variant_matrix'] as $mRow) {
                 if (!empty($mRow['variant_option_ids'])) {
-                    foreach ($mRow['variant_option_ids'] as $rawOptId) {
-                        if (is_numeric($rawOptId)) {
-                            $numericIds[] = (int)$rawOptId;
+                    foreach ($mRow['variant_option_ids'] as $possibleId) {
+                        if (is_numeric($possibleId)) {
+                            $allPossibleIds[] = (int) $possibleId;
                         }
                     }
                 }
             }
 
-            $validNumericIds = !empty($numericIds)
-                ? VariantOptions::whereIn('variant_option_id', array_unique($numericIds))->pluck('variant_option_id')->flip()->toArray()
+            $validOptionIds = !empty($allPossibleIds)
+                ? VariantOptions::whereIn('variant_option_id', array_unique($allPossibleIds))->pluck('variant_option_id')->toArray()
                 : [];
 
             foreach ($validated['variant_matrix'] as $mRow) {
@@ -446,14 +469,19 @@ class ProductController extends Controller
                 }
 
                 $realIdsToSync = [];
-                if (!empty($mRow['variant_option_ids'])) {
-                    foreach ($mRow['variant_option_ids'] as $vIdx => $rawOptId) {
-                        if (isset($optionValueMap[$rawOptId])) {
-                            $realIdsToSync[] = $optionValueMap[$rawOptId];
-                        } elseif (isset($positionalOptionMap[$vIdx][$rawOptId])) {
-                            $realIdsToSync[] = $positionalOptionMap[$vIdx][$rawOptId];
-                        } elseif (is_numeric($rawOptId) && isset($validNumericIds[$rawOptId])) {
-                            $realIdsToSync[] = $rawOptId;
+                $optionsToMatch = $mRow['variant_option_values'] ?? [];
+
+                foreach ($optionsToMatch as $val) {
+                    $cleanVal = is_array($val) ? strtolower(trim($val['value'] ?? '')) : strtolower(trim((string) $val));
+                    if (isset($optionValueMap[$cleanVal])) {
+                        $realIdsToSync[] = $optionValueMap[$cleanVal];
+                    }
+                }
+
+                if (empty($realIdsToSync) && !empty($mRow['variant_option_ids'])) {
+                    foreach ($mRow['variant_option_ids'] as $possibleId) {
+                        if (in_array((int) $possibleId, $validOptionIds, true)) {
+                            $realIdsToSync[] = (int) $possibleId;
                         }
                     }
                 }
@@ -465,91 +493,27 @@ class ProductController extends Controller
         }
     }
 
-    private function syncVariantsAndMatrix($product, array $validated): void
+    protected function syncVariantsAndMatrix($product, $validatedData, $hasVariants)
     {
-        // Clear old active variants definitions for re-building clean options
-        foreach ($product->productTypeVariant as $vType) {
-            foreach ($vType->variantOptions as $vOpt) {
-                $vOpt->image()->delete();
-                $vOpt->delete();
-            }
-            $vType->delete();
+        $variantTypeIds = $product->productTypeVariant()->pluck('variant_type_id');
+        $optionIds = VariantOptions::whereIn('variant_type_id', $variantTypeIds)->pluck('variant_option_id');
+
+        VariantOptions::whereIn('variant_option_id', $optionIds)->delete();
+        $product->productTypeVariant()->delete();
+
+        $skuIds = $product->productSkus()->pluck('sku_id');
+        if ($skuIds->isNotEmpty()) {
+            DB::table('sku_variant_option')->whereIn('sku_id', $skuIds)->delete();
+            \App\Models\Image::where('imageable_type', ProductSku::class)
+                ->whereIn('imageable_id', $skuIds)
+                ->delete();
+        }
+        $product->productSkus()->delete();
+
+        if (!$hasVariants) {
+            return;
         }
 
-        $optionValueMap = [];
-
-        // 1. Re-create Variant Types and Options
-        if (!empty($validated['variants'])) {
-            foreach ($validated['variants'] as $vData) {
-                $variantType = $product->productTypeVariant()->create([
-                    'variant_name' => $vData['variantTypeName'] ?? '',
-                ]);
-
-                if (!empty($vData['variantOptions'])) {
-                    foreach ($vData['variantOptions'] as $optData) {
-                        $option = $variantType->variantOptions()->create([
-                            'variant_value' => $optData['variantOptionValue'] ?? '',
-                        ]);
-
-                        if (!empty($optData['imageUrl'])) {
-                            $option->image()->create([
-                                'image_url' => $optData['imageUrl'],
-                                'isMain'    => true,
-                            ]);
-                        }
-
-                        // Map Option Value string to new DB ID
-                        $optionValueMap[$optData['variantOptionValue']] = $option->variant_option_id;
-                    }
-                }
-            }
-        }
-
-        // 2. Sync Matrix SKUs
-        if (!empty($validated['variant_matrix'])) {
-            $existingSkus = $product->productSkus->keyBy('sku_id');
-            $incomingSkuIds = [];
-
-            foreach ($validated['variant_matrix'] as $mRow) {
-                $skuId = $mRow['sku_id'] ?? null;
-
-                if ($skuId && $existingSkus->has($skuId)) {
-                    // Update existing SKU row (Preserves ID for sales history)
-                    $skuRecord = $existingSkus->get($skuId);
-                    $skuRecord->update([
-                        'sku_code'       => $mRow['sku_code'],
-                        'price'          => $mRow['price'] ?? 0.00,
-                        'stock_quantity' => $mRow['stock_quantity'] ?? 0,
-                        'is_active'      => true,
-                    ]);
-                    $incomingSkuIds[] = $skuId;
-                } else {
-                    // Create new SKU row
-                    $skuRecord = $product->productSkus()->create([
-                        'sku_code'       => $mRow['sku_code'],
-                        'price'          => $mRow['price'] ?? 0.00,
-                        'stock_quantity' => $mRow['stock_quantity'] ?? 0,
-                        'is_active'      => true,
-                    ]);
-                    $incomingSkuIds[] = $skuRecord->sku_id;
-                }
-
-                // Sync Pivot Option Links
-                $realOptionIds = [];
-                if (!empty($mRow['variant_option_values'])) {
-                    foreach ($mRow['variant_option_values'] as $val) {
-                        if (isset($optionValueMap[$val])) {
-                            $realOptionIds[] = $optionValueMap[$val];
-                        }
-                    }
-                }
-                $skuRecord->variantOptions()->sync($realOptionIds);
-            }
-
-            // Soft-deactivate SKUs omitted from updated matrix
-            $product->productSkus()
-                ->whereNotIn('sku_id', $incomingSkuIds)
-                ->update(['is_active' => false]);
-        }
+        $this->processVariantsAndMatrix($product, $validatedData, $hasVariants);
     }
 }

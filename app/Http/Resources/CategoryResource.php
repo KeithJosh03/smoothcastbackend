@@ -8,8 +8,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class CategoryResource extends JsonResource {
     public function toArray($request): array {
         return [
-            'categoryId'   => $this->category_id,
-            'categoryName' => $this->category_name,
+            'categoryId'   => $this->category_id ?? $this->id,
+            'categoryName' => $this->category_name ?? $this->name,
             'subcategoriesCount' => $this->sub_categories_count ?? 0,
             'isActive' => $this->is_active ?? true,
             'sortOrder' => $this->sort_order ?? 0,

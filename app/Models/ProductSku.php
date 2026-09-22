@@ -22,8 +22,13 @@ class ProductSku extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'price' => 'decimal:2',
+        'price'     => 'decimal:2',
     ];
+
+    /**
+     * Appends custom dynamic attributes when serialized to array/JSON.
+     */
+    protected $appends = ['active_promotion', 'final_price'];
 
     public function product(): BelongsTo
     {
@@ -49,5 +54,62 @@ class ProductSku extends Model
     {
         return $this->morphOne(Image::class, 'imageable')
             ->where('isMain', true);
+    }
+
+    /**
+     * Accessor: Dynamically finds the active promotion applying to this SKU's product or category.
+     */
+    public function getActivePromotionAttribute()
+    {
+        $now = now();
+        $productId = $this->product_id;
+        $categoryId = $this->product?->category_id;
+        $subCategoryId = $this->product?->sub_category_id;
+
+        return Promotion::where('is_active', true)
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>=', $now)
+            ->where(function ($query) use ($productId, $categoryId, $subCategoryId) {
+                // 1. Applies globally to ALL items
+                $query->where('apply_to', 'ALL')
+                // 2. Applies to specific PRODUCT
+                ->orWhere(function ($q) use ($productId) {
+                    $q->where('apply_to', 'PRODUCT')
+                      ->whereHas('products', fn($p) => $p->where('products.product_id', $productId));
+                })
+                // 3. Applies to specific CATEGORY
+                ->orWhere(function ($q) use ($categoryId, $subCategoryId) {
+                    $q->where('apply_to', 'CATEGORY')
+                      ->whereHas('categories', function ($c) use ($categoryId, $subCategoryId) {
+                          $c->whereIn('categories.category_id', array_filter([$categoryId, $subCategoryId]));
+                      });
+                });
+            })
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Accessor: Calculates final price based on active promotion type (PERCENTAGE / FIXED_AMOUNT).
+     */
+    public function getFinalPriceAttribute(): float
+    {
+        $originalPrice = (float) $this->price;
+        $promotion = $this->active_promotion;
+
+        if (!$promotion) {
+            return $originalPrice;
+        }
+
+        if ($promotion->discount_type === 'PERCENTAGE') {
+            $discount = ($originalPrice * (float) $promotion->discount_value) / 100;
+            return max(0, round($originalPrice - $discount, 2));
+        }
+
+        if ($promotion->discount_type === 'FIXED_AMOUNT') {
+            return max(0, round($originalPrice - (float) $promotion->discount_value, 2));
+        }
+
+        return $originalPrice;
     }
 }

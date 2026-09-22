@@ -103,7 +103,14 @@ class CategoryController extends Controller
 
     public function categoryProductCollection()
     {
+        // Fetch active promotions
+        $activePromotions = \App\Models\Promotion::where('is_active', true)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->get();
+
         $categories = Category::select('category_id', 'category_name')
+            ->where('is_active', true)
             ->with([
                 'products' => function ($query) {
                     $query->select(
@@ -114,23 +121,54 @@ class CategoryController extends Controller
                         'base_price',
                         'sub_category_id'
                     )
-                        ->with([
-                            'brand:brand_id,brand_name',
-                            'subCategory:sub_category_id,sub_category_name',
-                            'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
-                            'productTypeVariant.firstVariantOption',
-                            'firstProductSku.mainImage:image_id,imageable_id,imageable_type,image_url,isMain'
-                        ])
-                        ->take(4);
+                    ->selectSub(function ($q) {
+                        $q->from('product_skus')
+                            ->whereColumn('product_skus.product_id', 'products.product_id')
+                            ->selectRaw('MIN(price)');
+                    }, 'min_variant_price')
+                    ->selectSub(function ($q) {
+                        $q->from('product_skus')
+                            ->whereColumn('product_skus.product_id', 'products.product_id')
+                            ->selectRaw('MAX(price)');
+                    }, 'max_variant_price')
+                    ->with([
+                        'brand:brand_id,brand_name',
+                        'subCategory:sub_category_id,sub_category_name',
+                        'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
+                        'firstProductSku.mainImage:image_id,imageable_id,imageable_type,image_url,isMain'
+                    ])
+                    ->latest('product_id')
+                    ->take(4);
                 }
             ])
+            ->orderBy('sort_order', 'asc')
             ->get();
+
         return response()->json([
-            'categories' => new CategoryCollectionResource($categories)
-            // 'categories' => $categories
+            'categories' => (new CategoryCollectionResource($categories))->additionalPromotions($activePromotions)
         ]);
     }
 
+    public function headerCategories()
+    {
+        try {
+            // Fetch categories directly without column filtering
+            $categories = Category::all();
+
+            return response()->json([
+                'status' => true,
+                'categories' => CategoryResource::collection($categories)
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('headerCategories Error: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 
@@ -150,11 +188,30 @@ class CategoryController extends Controller
 
         $products = $category
             ->products()
-            ->select('base_price', 'product_id', 'brand_id', 'sub_category_id', 'product_title')
+            ->select(
+                'products.product_id',
+                'products.product_title',
+                'products.base_price',
+                'products.brand_id',
+                'products.sub_category_id'
+            )
+            // Subquery minimum variant price from product_skus
+            ->selectSub(function ($q) {
+                $q->from('product_skus')
+                ->whereColumn('product_skus.product_id', 'products.product_id')
+                ->selectRaw('MIN(price)');
+            }, 'min_variant_price')
+            // Subquery maximum variant price from product_skus
+            ->selectSub(function ($q) {
+                $q->from('product_skus')
+                ->whereColumn('product_skus.product_id', 'products.product_id')
+                ->selectRaw('MAX(price)');
+            }, 'max_variant_price')
             ->with([
                 'brand:brand_id,brand_name',
                 'subCategory:sub_category_id,sub_category_name',
                 'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
+                'firstProductSku.mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
                 'productTypeVariantFirst.firstVariantOption.image'
             ])
             ->paginate($perPage, ['*'], 'page', $page);

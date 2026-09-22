@@ -15,82 +15,97 @@ use App\Http\Controllers\SetupController;
 use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\SetupImageController;
 use App\Http\Controllers\ProductDiscountController;
-use App\Http\Controllers\AuthController; 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 
-Route::post('/imageupload/uploads', [ImageUploadController::class, 'upload']);
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 
-// BRANDS API
+// AUTHENTICATION
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/auth/social-callback', [AuthController::class, 'register']);
+
+// BRANDS (Public)
 Route::get('/brands/specificbrand/{brandname}', [BrandController::class, 'specificbrand']);
-Route::get('/brands/brandlogo/', [BrandController::class, 'brandLogo']);
-Route::get('/brands/brandNameListSearchHeader/', [BrandController::class, 'BrandNameListSearchHeader']);
-Route::put('/brands/{brand}', [BrandController::class, 'update']);
+Route::get('/brands/brandlogo', [BrandController::class, 'brandLogo']);
+Route::get('/brands/brandNameListSearchHeader', [BrandController::class, 'BrandNameListSearchHeader']);
 
-// CATEGORIES API
+// CATEGORIES & SUBCATEGORIES (Public)
+Route::get('/categories/header-list', [CategoryController::class, 'headerCategories']);
 Route::get('/categories/specificCategory/{categoryname}', [CategoryController::class, 'specificCategoryProduct']);
 Route::get('/categories/categorycollection', [CategoryController::class, 'categoryProductCollection']);
 Route::get('/categories/categorysub/{categoryId}', [CategoryController::class, 'categorySub']);
 Route::get('/categories/SubCatByCategoryId/{categoryId}', [CategoryController::class, 'subCatByCategoryId']);
-Route::post('/categories/reorder', [CategoryController::class, 'reorder']);
-Route::patch('/categories/{id}/status', [CategoryController::class, 'toggleStatus']);
-Route::post('/subcategory/reorder', [SubCategoryController::class, 'reorder']);
-Route::post('/subcategories/reorder', [SubCategoryController::class, 'reorder']);
-Route::patch('/subcategory/{id}/status', [SubCategoryController::class, 'toggleStatus']);
-Route::patch('/subcategories/{id}/status', [SubCategoryController::class, 'toggleStatus']);
 
-// PRODUCTS API
+// PROMOTIONS (Public Read)
+Route::get('/promotions/active', [PromotionController::class, 'activePromotions']);
+
+// PRODUCTS (Custom public endpoints must precede resource routes)
 Route::get('/products/check-sku', [ProductController::class, 'checkSku']);
-Route::get('/products/productsearchinitial/{productname}', [ProductController::class, 'productDetailInitial']);
-Route::get('/products/newarrival/', [ProductController::class, 'newArrivals']);
-Route::get('/products/productviewdetails/{productId}', [ProductController::class, 'productViewDetails']);
+Route::get('/products/productsearch', [ProductController::class, 'productsearch']);
+Route::get('/products/productlistdashboardsearch', [ProductController::class, 'productlistdashboardsearch']);
 Route::get('/products/productdetailEditDashboard/{productId}', [ProductController::class, 'ProductDetailsEditDashboard']);
-Route::get('/products/productsearch', [ProductController::class, 'productSearch']);
+Route::get('/products/productviewdetails/{id}', [ProductController::class, 'productViewDetails']);
+Route::post('/products/validate-sku', [ProductController::class, 'validateSku']);
 
-// Dashboard Product API
-Route::get('/products/productlistdashboardsearch/', [ProductController::class, 'productListDashBoardSearch']);
-Route::delete('/products/delete/{productId}', [ProductController::class, 'destroy']);
-
-// AUTHENTICATION API
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/auth/social-callback', [AuthController::class, 'register']); // <-- Added for Facebook/Google OAuth sync
-Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
-
-Route::post('products/store', [ProductController::class, 'store']);
-
+// PUBLIC READ-ONLY RESOURCES
 Route::apiResource('brands', BrandController::class)->only(['index', 'show']);
-Route::apiResource('productimage', ProductImageController::class);
 Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
-Route::apiResource('products', ProductController::class);
-Route::apiResource('productvariant', ProductVariantController::class);
-Route::apiResource('features', FeatureController::class);
-Route::apiResource('specifications', SpecificationController::class);
-Route::apiResource('packages', PackageController::class);
-Route::apiResource('productDiscounted', ProductDiscountController::class);
 Route::apiResource('subcategory', SubCategoryController::class)->only(['index', 'show']);
-Route::apiResource('setups', SetupController::class);
-Route::apiResource('inclusions', InclusionController::class);
-Route::apiResource('setupimages', SetupImageController::class);
+Route::apiResource('products', ProductController::class)->only(['index', 'show']);
+Route::apiResource('reviews', ReviewController::class)->only(['index']);
 
-// REVIEWS API
-Route::apiResource('reviews', ReviewController::class)->only(['index', 'store', 'destroy']);
+/*
+|--------------------------------------------------------------------------
+| Authenticated User Routes (Admins, Bloggers, Regular Users)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::apiResource('reviews', ReviewController::class)->only(['store', 'destroy']);
 
-// ADMIN PROTECTED ROUTES
+    // Media Uploads (Accessible by any authenticated user)
+    Route::post('/imageupload/uploads', [ImageUploadController::class, 'upload']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Admin Protected Routes (Write Access & Admin Management)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth:sanctum', EnsureUserIsAdmin::class])->group(function () {
+    // Admin Prefix Operations
     Route::prefix('admin')->group(function () {
         Route::patch('categories/{id}/status', [CategoryController::class, 'toggleStatus']);
         Route::post('categories/reorder', [CategoryController::class, 'reorder']);
         Route::patch('subcategories/{id}/status', [SubCategoryController::class, 'toggleStatus']);
         Route::post('subcategories/reorder', [SubCategoryController::class, 'reorder']);
+
+        // Promotions Full Management
+        Route::apiResource('promotions', PromotionController::class);
     });
 
+    // Resource Management (Create, Update, Delete)
     Route::apiResource('brands', BrandController::class)->only(['store', 'update', 'destroy']);
     Route::apiResource('categories', CategoryController::class)->only(['store', 'update', 'destroy']);
     Route::apiResource('subcategory', SubCategoryController::class)->only(['store', 'update', 'destroy']);
-    Route::patch('categories/{id}/status', [CategoryController::class, 'toggleStatus']);
-    Route::post('categories/reorder', [CategoryController::class, 'reorder']);
-    Route::patch('subcategory/{id}/status', [SubCategoryController::class, 'toggleStatus']);
-    Route::post('subcategory/reorder', [SubCategoryController::class, 'reorder']);
+    Route::apiResource('products', ProductController::class)->only(['store', 'update', 'destroy']);
+
+    // Utility Resources
+    Route::apiResource('productimage', ProductImageController::class);
+    Route::apiResource('productvariant', ProductVariantController::class);
+    Route::apiResource('features', FeatureController::class);
+    Route::apiResource('specifications', SpecificationController::class);
+    Route::apiResource('packages', PackageController::class);
+    Route::apiResource('productDiscounted', ProductDiscountController::class);
+    Route::apiResource('setups', SetupController::class);
+    Route::apiResource('inclusions', InclusionController::class);
+    Route::apiResource('setupimages', SetupImageController::class);
 });
