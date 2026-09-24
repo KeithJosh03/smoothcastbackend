@@ -88,6 +88,10 @@ Route::middleware(['auth:sanctum', EnsureUserIsAdmin::class])->group(function ()
         Route::patch('subcategories/{id}/status', [SubCategoryController::class, 'toggleStatus']);
         Route::post('subcategories/reorder', [SubCategoryController::class, 'reorder']);
         Route::patch('products/{id}/status', [ProductController::class, 'toggleStatus']);
+        
+        // Users Management
+        Route::get('users', [\App\Http\Controllers\Admin\UserController::class, 'index']);
+        Route::patch('users/{id}/role', [\App\Http\Controllers\Admin\UserController::class, 'updateRole']);
 
         // Promotions Full Management
         Route::apiResource('promotions', PromotionController::class);
