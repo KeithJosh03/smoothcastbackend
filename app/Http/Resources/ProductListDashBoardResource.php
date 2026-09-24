@@ -21,6 +21,7 @@ class ProductListDashBoardResource extends JsonResource
                 ];
             }),
             'sku' => $this->sku,
+            'isActive' => (bool)$this->is_active,
             'stockQuantity' => $this->stock_quantity,
             'hasVariants' => $this->productTypeVariant && $this->productTypeVariant->isNotEmpty(),
             'productSkus' => ($this->productSkus ?? collect())->map(function ($sku) {

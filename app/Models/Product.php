@@ -21,7 +21,11 @@ class Product extends Model
         'brand_id', 'category_id', 'sub_category_id', 
         'product_title', 'base_price', 'description', 
         'features', 'specifications', 'release_date',
-        'sku', 'stock_quantity'
+        'sku', 'stock_quantity', 'is_active'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean'
     ];
 
     public function brand(): BelongsTo

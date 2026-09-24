@@ -53,6 +53,19 @@ class SubCategoryController extends Controller {
     }
 
     public function destroy(SubCategory $subcategory) {
+        if ($subcategory->is_active) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Cannot delete an active subcategory.'
+            ], 422);
+        }
+        if ($subcategory->products()->count() > 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Cannot delete subcategory with linked products.'
+            ], 422);
+        }
+
         $subcategory->delete();
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 
 class ImageUploadController extends Controller
 {
@@ -27,9 +26,10 @@ class ImageUploadController extends Controller
             $name = Str::random(40) . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('uploads', $name, 'public');
 
+            // Force a clean relative path instead of full domain URL from Storage::url()
             $uploaded[] = [
                 'originIndex' => $originIndex,
-                'url' => Storage::url($path),
+                'url' => '/storage/' . $path,
             ];
         }
 

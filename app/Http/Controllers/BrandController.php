@@ -109,6 +109,13 @@ class BrandController extends Controller
 
     public function destroy(Brand $brand)
     {
+        if ($brand->brandProducts()->count() > 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Cannot delete brand with linked products.'
+            ], 422);
+        }
+
         $brand->delete();
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }

@@ -196,6 +196,13 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
 
+        if ($product->is_active) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Cannot delete an active product. Deactivate it first.'
+            ], 422);
+        }
+
         DB::transaction(function () use ($product) {
             $product->images()->delete();
 

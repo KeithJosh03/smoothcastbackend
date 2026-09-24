@@ -69,6 +69,19 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        if ($category->is_active) {
+             return response()->json([
+                'status' => false,
+                'message' => 'Cannot delete an active category.'
+            ], 422);
+        }
+        if ($category->subCategories()->count() > 0 || $category->products()->count() > 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Cannot delete category with linked subcategories or products.'
+            ], 422);
+        }
+
         $category->delete();
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }

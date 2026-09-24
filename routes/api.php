@@ -87,6 +87,7 @@ Route::middleware(['auth:sanctum', EnsureUserIsAdmin::class])->group(function ()
         Route::post('categories/reorder', [CategoryController::class, 'reorder']);
         Route::patch('subcategories/{id}/status', [SubCategoryController::class, 'toggleStatus']);
         Route::post('subcategories/reorder', [SubCategoryController::class, 'reorder']);
+        Route::patch('products/{id}/status', [ProductController::class, 'toggleStatus']);
 
         // Promotions Full Management
         Route::apiResource('promotions', PromotionController::class);
