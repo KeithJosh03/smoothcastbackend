@@ -11,21 +11,17 @@ use App\Http\Controllers\SpecificationController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\PackageController;
-use App\Http\Controllers\SetupController;
+use App\Http\Controllers\SetupsController;
 use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\SetupImageController;
 use App\Http\Controllers\ProductDiscountController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Middleware\EnsureUserIsAdmin;
-
-/*
-|--------------------------------------------------------------------------
-| Public Routes
-|--------------------------------------------------------------------------
-*/
+use App\Http\Controllers\BlogController;
 
 // AUTHENTICATION
 Route::post('/login', [AuthController::class, 'login']);
@@ -47,6 +43,9 @@ Route::get('/categories/SubCatByCategoryId/{categoryId}', [CategoryController::c
 // PROMOTIONS (Public Read)
 Route::get('/promotions/active', [PromotionController::class, 'activePromotions']);
 
+// SETUPS (Public Read)
+Route::get('/setups-grouped', [SetupsController::class, 'getGroupedSetups']);
+
 // PRODUCTS (Custom public endpoints must precede resource routes)
 Route::get('/products/check-sku', [ProductController::class, 'checkSku']);
 Route::get('/products/productsearch', [ProductController::class, 'productsearch']);
@@ -61,6 +60,16 @@ Route::apiResource('categories', CategoryController::class)->only(['index', 'sho
 Route::apiResource('subcategory', SubCategoryController::class)->only(['index', 'show']);
 Route::apiResource('products', ProductController::class)->only(['index', 'show']);
 Route::apiResource('reviews', ReviewController::class)->only(['index']);
+Route::apiResource('setup-categories', \App\Http\Controllers\SetupCategoryController::class)->only(['index', 'show']);
+Route::get('blogs', [BlogController::class, 'index']);
+
+// CART (Public access, relies on session ID or Sanctum token)
+Route::prefix('cart')->group(function () {
+    Route::get('/', [CartController::class, 'getCart']);
+    Route::post('/add', [CartController::class, 'addToCart']);
+    Route::put('/update/{itemId}', [CartController::class, 'updateQuantity']);
+    Route::delete('/remove/{itemId}', [CartController::class, 'removeItem']);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -73,13 +82,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Media Uploads (Accessible by any authenticated user)
     Route::post('/imageupload/uploads', [ImageUploadController::class, 'upload']);
+
+    // Blogs User Actions
+    Route::post('/blogs', [BlogController::class, 'store']);
+    Route::get('/blogs/search-products', [BlogController::class, 'searchProducts']);
+    Route::post('/blogs/{id}/like', [BlogController::class, 'toggleLike']);
 });
 
-/*
-|--------------------------------------------------------------------------
-| Admin Protected Routes (Write Access & Admin Management)
-|--------------------------------------------------------------------------
-*/
+
 Route::middleware(['auth:sanctum', EnsureUserIsAdmin::class])->group(function () {
     // Admin Prefix Operations
     Route::prefix('admin')->group(function () {
@@ -88,6 +98,8 @@ Route::middleware(['auth:sanctum', EnsureUserIsAdmin::class])->group(function ()
         Route::patch('subcategories/{id}/status', [SubCategoryController::class, 'toggleStatus']);
         Route::post('subcategories/reorder', [SubCategoryController::class, 'reorder']);
         Route::patch('products/{id}/status', [ProductController::class, 'toggleStatus']);
+        Route::patch('products/sku/{id}/status', [ProductController::class, 'toggleSkuStatus']);
+        Route::patch('setups/{id}/status', [SetupsController::class, 'toggleStatus']);
         
         // Users Management
         Route::get('users', [\App\Http\Controllers\Admin\UserController::class, 'index']);
@@ -109,8 +121,9 @@ Route::middleware(['auth:sanctum', EnsureUserIsAdmin::class])->group(function ()
     Route::apiResource('features', FeatureController::class);
     Route::apiResource('specifications', SpecificationController::class);
     Route::apiResource('packages', PackageController::class);
+    Route::apiResource('setup-categories', SetupCategoryController::class)->only(['store', 'update', 'destroy']);
     Route::apiResource('productDiscounted', ProductDiscountController::class);
-    Route::apiResource('setups', SetupController::class);
+    Route::apiResource('setups', SetupsController::class);
     Route::apiResource('inclusions', InclusionController::class);
     Route::apiResource('setupimages', SetupImageController::class);
 });

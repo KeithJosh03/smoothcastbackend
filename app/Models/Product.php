@@ -97,23 +97,40 @@ class Product extends Model
 
     public function getActivePromotionAttribute(): ?Promotion
     {
-        return Promotion::currentlyActive()
+        $promotions = Promotion::currentlyActive()
             ->where(function ($query) {
-                // 1. Applies store-wide
                 $query->where('apply_to', 'ALL')
-                // 2. Applies to this product's category
-                ->orWhere(function ($q) {
-                    $q->where('apply_to', 'CATEGORY')
-                    ->whereHas('categories', fn($c) => $c->where('categories.category_id', $this->category_id));
-                })
-                // 3. Directly targets this specific product
                 ->orWhere(function ($q) {
                     $q->where('apply_to', 'PRODUCT')
                     ->whereHas('products', fn($p) => $p->where('products.product_id', $this->product_id));
                 });
             })
-            ->orderBy('discount_value', 'desc') // Gives priority to larger discounts
-            ->first();
+            ->get();
+
+        if ($promotions->isEmpty()) {
+            return null;
+        }
+
+        $bestPromotion = null;
+        $maxDiscount = -1;
+
+        $price = (float) $this->base_price;
+
+        foreach ($promotions as $promotion) {
+            $discountAmount = 0;
+            if ($promotion->discount_type === 'PERCENTAGE') {
+                $discountAmount = $price * ($promotion->discount_value / 100);
+            } else {
+                $discountAmount = (float) $promotion->discount_value;
+            }
+
+            if ($discountAmount > $maxDiscount) {
+                $maxDiscount = $discountAmount;
+                $bestPromotion = $promotion;
+            }
+        }
+
+        return $bestPromotion;
     }
 
 

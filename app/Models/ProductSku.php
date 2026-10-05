@@ -25,9 +25,6 @@ class ProductSku extends Model
         'price'     => 'decimal:2',
     ];
 
-    /**
-     * Appends custom dynamic attributes when serialized to array/JSON.
-     */
     protected $appends = ['active_promotion', 'final_price'];
 
     public function product(): BelongsTo
@@ -56,42 +53,23 @@ class ProductSku extends Model
             ->where('isMain', true);
     }
 
-    /**
-     * Accessor: Dynamically finds the active promotion applying to this SKU's product or category.
-     */
     public function getActivePromotionAttribute()
     {
-        $now = now();
         $productId = $this->product_id;
-        $categoryId = $this->product?->category_id;
-        $subCategoryId = $this->product?->sub_category_id;
 
-        return Promotion::where('is_active', true)
-            ->where('start_date', '<=', $now)
-            ->where('end_date', '>=', $now)
-            ->where(function ($query) use ($productId, $categoryId, $subCategoryId) {
-                // 1. Applies globally to ALL items
+        return Promotion::currentlyActive()
+            ->where(function ($query) use ($productId) {
                 $query->where('apply_to', 'ALL')
-                // 2. Applies to specific PRODUCT
                 ->orWhere(function ($q) use ($productId) {
                     $q->where('apply_to', 'PRODUCT')
                       ->whereHas('products', fn($p) => $p->where('products.product_id', $productId));
-                })
-                // 3. Applies to specific CATEGORY
-                ->orWhere(function ($q) use ($categoryId, $subCategoryId) {
-                    $q->where('apply_to', 'CATEGORY')
-                      ->whereHas('categories', function ($c) use ($categoryId, $subCategoryId) {
-                          $c->whereIn('categories.category_id', array_filter([$categoryId, $subCategoryId]));
-                      });
                 });
             })
             ->latest()
             ->first();
     }
 
-    /**
-     * Accessor: Calculates final price based on active promotion type (PERCENTAGE / FIXED_AMOUNT).
-     */
+
     public function getFinalPriceAttribute(): float
     {
         $originalPrice = (float) $this->price;

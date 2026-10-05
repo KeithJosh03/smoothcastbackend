@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-
-
 class ProductVariantType extends Model
 {
     public $timestamps = false;
@@ -33,12 +31,4 @@ class ProductVariantType extends Model
         return $this->hasOne(VariantOptions::class , 'variant_type_id')
             ->orderBy('variant_option_id');
     }
-
-// public function variantOptionsFirst(): HasOne {
-//     return $this->hasOne(VariantOptions::class, 'variant_type_id')
-//                 ->first()
-//                 ->limit(1);
-// }
-
-
 }

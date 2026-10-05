@@ -16,10 +16,32 @@ class ProductCustomerViewResource extends JsonResource
             ? $this->productSkus->sum('stock_quantity') 
             : $this->stock_quantity;
 
+        // Apply promotions
+        $promotion = $this->active_promotion;
+        $hasDiscount = $promotion !== null;
+        
+        $discountLabel = null;
+        $baseFinalPrice = (float) $this->base_price;
+        
+        if ($hasDiscount) {
+            $discountLabel = $promotion->discount_type === 'PERCENTAGE' 
+                ? "-{$promotion->discount_value}%" 
+                : "-₱{$promotion->discount_value}";
+                
+            if ($promotion->discount_type === 'PERCENTAGE') {
+                $baseFinalPrice = max(0, $baseFinalPrice - ($baseFinalPrice * ($promotion->discount_value / 100)));
+            } else {
+                $baseFinalPrice = max(0, $baseFinalPrice - $promotion->discount_value);
+            }
+        }
+
         return [
             'productId'       => $this->product_id,
             'productTitle'    => $this->product_title,
             'basePrice'       => (string) $this->base_price,
+            'finalPrice'      => (string) $baseFinalPrice,
+            'hasDiscount'     => $hasDiscount,
+            'discountLabel'   => $discountLabel,
             'description'     => $this->description,
             'features'        => $this->features,
             'specifications'  => $this->specifications,
@@ -59,6 +81,13 @@ class ProductCustomerViewResource extends JsonResource
                     'skuId'            => $sku->sku_id,
                     'skuCode'          => $sku->sku_code,
                     'price'            => (string) $sku->price,
+                    'finalPrice'       => (string) $sku->final_price,
+                    'hasDiscount'      => $sku->active_promotion !== null,
+                    'discountLabel'    => $sku->active_promotion 
+                        ? ($sku->active_promotion->discount_type === 'PERCENTAGE' 
+                            ? "-{$sku->active_promotion->discount_value}%" 
+                            : "-₱{$sku->active_promotion->discount_value}")
+                        : null,
                     'stockQuantity'    => $sku->stock_quantity,
                     'inStock'          => $sku->stock_quantity > 0,
                     'variantOptionIds' => $sku->variantOptions ? $sku->variantOptions->pluck('variant_option_id')->toArray() : [],

@@ -3,12 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setup;
+use App\Models\SetupCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SetupsController extends Controller
 {
+    public function getCategories()
+    {
+        return response()->json([
+            'status' => true,
+            'data' => SetupCategory::all()
+        ]);
+    }
+
+    public function getGroupedSetups()
+    {
+        $categories = SetupCategory::with(['setups' => function($query) {
+            $query->where('is_published', true)
+                  ->with(['items.product', 'inclusions', 'mainImage']);
+        }])->get();
+
+        $uncategorized = Setup::whereNull('setup_category_id')
+            ->where('is_published', true)
+            ->with(['items.product', 'inclusions', 'mainImage'])
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'categories' => $categories,
+                'uncategorized' => $uncategorized
+            ]
+        ]);
+    }
     /**
      * Display a listing of the resource.
      */
@@ -29,10 +58,12 @@ class SetupsController extends Controller
         $validated = $request->validate([
             'bundle_title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:setups,slug',
+            'setup_category_id' => 'nullable|exists:setup_categories,id',
             'description' => 'nullable|string',
             'hero_banner' => 'nullable|string',
-            'sku' => 'required|string|max:255|unique:setups,sku',
-            'pricing_type' => 'required|in:fixed,calculated',
+            'sku' => 'nullable|string|max:255|unique:setups,sku',
+            'pricing_type' => 'nullable|in:fixed,calculated',
+            'retail_price' => 'nullable|numeric|min:0',
             'bundle_price' => 'required|numeric|min:0',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'stock_quantity' => 'required|integer|min:0',
@@ -45,6 +76,7 @@ class SetupsController extends Controller
             'bundle_items.*.sku_id' => 'nullable|exists:product_skus,sku_id',
             'bundle_items.*.quantity' => 'required|integer|min:1',
             'bundle_items.*.is_required' => 'required|boolean',
+            'bundle_items.*.group_name' => 'nullable|string|max:255',
 
             'custom_inclusions' => 'nullable|array',
             'custom_inclusions.*.title' => 'required|string|max:255',
@@ -63,9 +95,11 @@ class SetupsController extends Controller
             $setup = Setup::create([
                 'bundle_title' => $validated['bundle_title'],
                 'slug' => $validated['slug'],
+                'setup_category_id' => $validated['setup_category_id'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'sku' => $validated['sku'],
-                'pricing_type' => $validated['pricing_type'],
+                'pricing_type' => $validated['pricing_type'] ?? 'fixed',
+                'retail_price' => $validated['retail_price'] ?? null,
                 'bundle_price' => $validated['bundle_price'],
                 'discount_percentage' => $validated['discount_percentage'] ?? null,
                 'stock_quantity' => $validated['stock_quantity'],
@@ -128,10 +162,12 @@ class SetupsController extends Controller
         $validated = $request->validate([
             'bundle_title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:setups,slug,' . $setup->setup_id . ',setup_id',
+            'setup_category_id' => 'nullable|exists:setup_categories,id',
             'description' => 'nullable|string',
             'hero_banner' => 'nullable|string',
-            'sku' => 'required|string|max:255|unique:setups,sku,' . $setup->setup_id . ',setup_id',
-            'pricing_type' => 'required|in:fixed,calculated',
+            'sku' => 'nullable|string|max:255|unique:setups,sku,' . $setup->setup_id . ',setup_id',
+            'pricing_type' => 'nullable|in:fixed,calculated',
+            'retail_price' => 'nullable|numeric|min:0',
             'bundle_price' => 'required|numeric|min:0',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'stock_quantity' => 'required|integer|min:0',
@@ -144,6 +180,7 @@ class SetupsController extends Controller
             'bundle_items.*.sku_id' => 'nullable|exists:product_skus,sku_id',
             'bundle_items.*.quantity' => 'required|integer|min:1',
             'bundle_items.*.is_required' => 'required|boolean',
+            'bundle_items.*.group_name' => 'nullable|string|max:255',
 
             'custom_inclusions' => 'nullable|array',
             'custom_inclusions.*.title' => 'required|string|max:255',
@@ -158,9 +195,11 @@ class SetupsController extends Controller
             $setup->update([
                 'bundle_title' => $validated['bundle_title'],
                 'slug' => $validated['slug'] ?? $setup->slug,
+                'setup_category_id' => $validated['setup_category_id'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'sku' => $validated['sku'],
-                'pricing_type' => $validated['pricing_type'],
+                'pricing_type' => $validated['pricing_type'] ?? 'fixed',
+                'retail_price' => $validated['retail_price'] ?? null,
                 'bundle_price' => $validated['bundle_price'],
                 'discount_percentage' => $validated['discount_percentage'] ?? null,
                 'stock_quantity' => $validated['stock_quantity'],
@@ -219,6 +258,22 @@ class SetupsController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Setup deleted successfully'
+        ]);
+    }
+
+    /**
+     * Toggle the active/published status of a setup.
+     */
+    public function toggleStatus($id)
+    {
+        $setup = Setup::findOrFail($id);
+        $setup->is_published = !$setup->is_published;
+        $setup->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Status updated successfully',
+            'is_published' => $setup->is_published
         ]);
     }
 }

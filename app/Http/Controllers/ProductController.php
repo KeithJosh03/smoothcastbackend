@@ -42,6 +42,7 @@ class ProductController extends Controller
             'brand_id'                                        => 'nullable|exists:brands,brand_id',
             'sku'                                             => $hasVariants ? 'nullable|string' : 'nullable|string|unique:products,sku',
             'stock_quantity'                                  => $hasVariants ? 'nullable|integer' : 'nullable|integer|min:0',
+            'is_active'                                       => 'nullable|boolean',
             'medias'                                          => 'nullable|array',
             'medias.*.url'                                    => 'nullable|string',
             'medias.*.file'                                   => 'nullable|string',
@@ -56,6 +57,7 @@ class ProductController extends Controller
             'variant_matrix.*.sku_code'                       => 'required_with:variant_matrix|string|distinct|unique:product_skus,sku_code',
             'variant_matrix.*.price'                          => 'required_with:variant_matrix|numeric|min:0',
             'variant_matrix.*.stock_quantity'                 => 'required_with:variant_matrix|integer|min:0',
+            'variant_matrix.*.is_active'                      => 'nullable|boolean',
             'variant_matrix.*.image_url'                      => 'nullable|string',
             'variant_matrix.*.variant_option_ids'              => 'nullable|array',
             'variant_matrix.*.variant_option_values'          => 'nullable|array'
@@ -79,6 +81,7 @@ class ProductController extends Controller
                 'brand_id'        => $validated['brand_id'] ?? null,
                 'sku'             => $masterSku,
                 'stock_quantity'  => $hasVariants ? null : ($validated['stock_quantity'] ?? 0),
+                'is_active'       => $validated['is_active'] ?? true,
                 'release_date'    => Carbon::now(),
             ]);
 
@@ -134,6 +137,7 @@ class ProductController extends Controller
             'brand_id'                                        => 'nullable|exists:brands,brand_id',
             'sku'                                             => $hasVariants ? 'nullable|string' : 'nullable|string|unique:products,sku,' . $product->product_id . ',product_id',
             'stock_quantity'                                  => $hasVariants ? 'nullable|integer' : 'nullable|integer|min:0',
+            'is_active'                                       => 'nullable|boolean',
             'medias'                                          => 'nullable|array',
             'medias.*.url'                                    => 'nullable|string',
             'medias.*.file'                                   => 'nullable|string',
@@ -155,6 +159,7 @@ class ProductController extends Controller
             ],
             'variant_matrix.*.price'                          => 'required_with:variant_matrix|numeric|min:0',
             'variant_matrix.*.stock_quantity'                 => 'required_with:variant_matrix|integer|min:0',
+            'variant_matrix.*.is_active'                      => 'nullable|boolean',
             'variant_matrix.*.image_url'                      => 'nullable|string',
             'variant_matrix.*.variant_option_ids'              => 'nullable|array',
             'variant_matrix.*.variant_option_values'          => 'nullable|array'
@@ -178,6 +183,7 @@ class ProductController extends Controller
                 'brand_id'        => $validated['brand_id'] ?? null,
                 'sku'             => $masterSku,
                 'stock_quantity'  => $hasVariants ? null : ($validated['stock_quantity'] ?? 0),
+                'is_active'       => $validated['is_active'] ?? true,
             ]);
 
             $product->images()->delete();
@@ -227,6 +233,32 @@ class ProductController extends Controller
         return response()->json([
             'status'  => true,
             'message' => 'Product deleted successfully.'
+        ]);
+    }
+
+    public function toggleStatus($id)
+    {
+        $product = Product::findOrFail($id);
+        $product->is_active = !$product->is_active;
+        $product->save();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Status updated successfully',
+            'is_active' => $product->is_active
+        ]);
+    }
+
+    public function toggleSkuStatus($skuId)
+    {
+        $sku = \App\Models\ProductSku::findOrFail($skuId);
+        $sku->is_active = !$sku->is_active;
+        $sku->save();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'SKU status updated successfully',
+            'is_active' => $sku->is_active
         ]);
     }
 
@@ -465,7 +497,7 @@ class ProductController extends Controller
                     'sku_code'       => $mRow['sku_code'],
                     'price'          => $mRow['price'] ?? 0.00,
                     'stock_quantity' => $mRow['stock_quantity'] ?? 0,
-                    'is_active'      => true,
+                    'is_active'      => $mRow['is_active'] ?? true,
                 ]);
 
                 if (!empty($mRow['image_url']) && is_string($mRow['image_url'])) {

@@ -15,7 +15,8 @@ class SetupItem extends Model
         'product_id',
         'sku_id',
         'quantity',
-        'is_required'
+        'is_required',
+        'group_name'
     ];
 
     protected $casts = [

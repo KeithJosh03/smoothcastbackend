@@ -30,13 +30,13 @@ class Promotion extends Model
 
     // --- Relationships ---
 
-    public function categories(): BelongsToMany
+    public function setups(): BelongsToMany
     {
         return $this->belongsToMany(
-            Category::class,
-            'promotion_category',
+            Setup::class,
+            'promotion_setup',
             'promotion_id',
-            'category_id'
+            'setup_id'
         );
     }
 
@@ -50,24 +50,18 @@ class Promotion extends Model
         );
     }
 
-    // --- Query Scopes ---
-
-    /**
-     * Fetch only campaigns that are enabled and currently running
-     */
     public function scopeCurrentlyActive(Builder $query): Builder
     {
         $now = Carbon::now();
         return $query->where('is_active', true)
-                     ->where('start_date', '<=', $now)
-                     ->where('end_date', '>=', $now);
+                     ->where(function ($q) use ($now) {
+                         $q->whereNull('start_date')->orWhere('start_date', '<=', $now);
+                     })
+                     ->where(function ($q) use ($now) {
+                         $q->whereNull('end_date')->orWhere('end_date', '>=', $now);
+                     });
     }
 
-    // --- Price Calculation Helper ---
-
-    /**
-     * Calculate discount amount given a price
-     */
     public function calculateDiscount(float $price): float
     {
         if ($this->discount_type === 'PERCENTAGE') {

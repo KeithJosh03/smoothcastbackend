@@ -117,10 +117,7 @@ class CategoryController extends Controller
     public function categoryProductCollection()
     {
         // Fetch active promotions
-        $activePromotions = \App\Models\Promotion::where('is_active', true)
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
-            ->get();
+        $activePromotions = \App\Models\Promotion::with(['products', 'setups'])->currentlyActive()->get();
 
         $categories = Category::select('category_id', 'category_name')
             ->where('is_active', true)
