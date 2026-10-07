@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class ProductVariantTypeController extends Controller {
 
     public function index() {
-        $variants = ProductVariant::all();
+        $variants = ProductVariantType::all();
         return response()->json([
             'status' => true,
             'variants' => $variants

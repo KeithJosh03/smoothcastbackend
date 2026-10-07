@@ -116,7 +116,6 @@ class CategoryController extends Controller
 
     public function categoryProductCollection()
     {
-        // Fetch active promotions
         $activePromotions = \App\Models\Promotion::with(['products', 'setups'])->currentlyActive()->get();
 
         $categories = Category::select('category_id', 'category_name')
@@ -131,6 +130,7 @@ class CategoryController extends Controller
                         'base_price',
                         'sub_category_id'
                     )
+                    ->where('is_active', true)
                     ->selectSub(function ($q) {
                         $q->from('product_skus')
                             ->whereColumn('product_skus.product_id', 'products.product_id')
@@ -201,6 +201,7 @@ class CategoryController extends Controller
         $sort = $request->get('sort', 'newest');
 
         $query = $category->products()
+            ->where('products.is_active', true) 
             ->select(
                 'products.product_id',
                 'products.product_title',
@@ -280,6 +281,13 @@ class CategoryController extends Controller
             'hasMore' => $products->hasMorePages()
         ]);
     }
+
+
+
+
+
+
+
 
     public function categorySub($categoryId)
     {

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('title');
             $table->longText('caption_html');
             $table->integer('likes_count')->default(0);
+            $table->string('location')->nullable();
             $table->timestamps();
         });
     }

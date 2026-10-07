@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Setup;
 use App\Models\SetupCategory;
+use App\Http\Resources\SetupCustomerViewResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class SetupsController extends Controller
 {
@@ -15,6 +17,43 @@ class SetupsController extends Controller
         return response()->json([
             'status' => true,
             'data' => SetupCategory::all()
+        ]);
+    }
+
+    public function setupViewDetails($id)
+    {
+        $setup = Setup::with([
+            'category',
+            'items.product.images',
+            'items.sku',
+            'inclusions',
+            'images',
+        ])->where('is_published', true)->find($id);
+
+        if (!$setup) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Setup not found',
+            ], 404);
+        }
+
+        $now = Carbon::now();
+        if ($setup->start_date && $now->lt($setup->start_date)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Setup is not available yet',
+            ], 404);
+        }
+        if ($setup->end_date && $now->gt($setup->end_date)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Setup is no longer available',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => new SetupCustomerViewResource($setup),
         ]);
     }
 

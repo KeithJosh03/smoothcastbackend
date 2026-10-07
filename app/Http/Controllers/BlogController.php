@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use App\Models\Blog;
 use App\Models\BlogLike;
 use Illuminate\Support\Facades\Auth;
@@ -28,8 +27,11 @@ class BlogController extends Controller
                 'user' => [
                     'id' => $blog->user->id ?? 0,
                     'name' => $blog->user->name ?? 'Unknown Angler',
+                    'email' => $blog->user->email ?? null,
+                    'avatar' => $blog->user->avatar ?? $blog->user->image ?? null
                 ],
                 'title' => $blog->title,
+                'location' => $blog->location,
                 'caption_html' => $blog->caption_html,
                 'likes_count' => $blog->likes_count,
                 'is_liked' => $userId ? $blog->likes->isNotEmpty() : false,
@@ -57,6 +59,50 @@ class BlogController extends Controller
             'current_page' => $blogs->currentPage(),
             'last_page' => $blogs->lastPage(),
         ]);
+    }
+
+    public function show($id)
+    {
+        $userId = Auth::guard('sanctum')->id();
+
+        $blog = Blog::with(['user', 'images', 'productTags.product.images', 'likes' => function($query) use ($userId) {
+            if ($userId) {
+                $query->where('user_id', $userId);
+            }
+        }])->findOrFail($id);
+
+        $formattedBlog = [
+            'id' => $blog->id,
+            'user' => [
+                'id' => $blog->user->id ?? 0,
+                'name' => $blog->user->name ?? 'Unknown Angler',
+                'email' => $blog->user->email ?? null,
+                'avatar' => $blog->user->avatar ?? $blog->user->image ?? null
+            ],
+            'title' => $blog->title,
+            'location' => $blog->location,
+            'caption_html' => $blog->caption_html,
+            'likes_count' => $blog->likes_count,
+            'is_liked' => $userId ? $blog->likes->isNotEmpty() : false,
+            'created_at' => $blog->created_at->diffForHumans(),
+            'images' => $blog->images->map(function($img) {
+                return [
+                    'url' => $img->image_url,
+                    'is_main' => $img->isMain
+                ];
+            }),
+            'tagged_products' => $blog->productTags->map(function($tag) {
+                if (!$tag->product) return null;
+                return [
+                    'id' => $tag->product->product_id,
+                    'title' => $tag->product->product_title,
+                    'price' => $tag->product->base_price,
+                    'image' => $tag->product->images->where('isMain', 1)->first()->image_url ?? ($tag->product->images->first()->image_url ?? null)
+                ];
+            })->filter()->values()
+        ];
+
+        return response()->json(['blog' => $formattedBlog]);
     }
 
     public function toggleLike($id)
@@ -99,41 +145,129 @@ class BlogController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'caption_html' => 'required|string',
-            'images' => 'array',
-            'tagged_products' => 'array',
-        ]);
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'location' => 'nullable|string|max:255',
+                'caption_html' => 'required|string',
+                'images' => 'array',
+                'tagged_products' => 'array',
+            ]);
 
-        $blog = Blog::create([
-            'user_id' => $userId,
-            'title' => $validated['title'],
-            'caption_html' => $validated['caption_html'],
-        ]);
+            $blog = Blog::create([
+                'user_id' => $userId,
+                'title' => $validated['title'],
+                'location' => $validated['location'] ?? null,
+                'caption_html' => $validated['caption_html'],
+            ]);
 
-        if (!empty($validated['images'])) {
-            foreach ($validated['images'] as $index => $imageUrl) {
-                \App\Models\Image::create([
-                    'imageable_id' => $blog->id,
-                    'imageable_type' => Blog::class,
-                    'image_url' => $imageUrl,
-                    'isMain' => $index === 0,
-                ]);
+            if (!empty($validated['images'])) {
+                foreach ($validated['images'] as $index => $imageUrl) {
+                    $blog->images()->create([
+                        'image_url' => $imageUrl,
+                        'isMain' => $index === 0,
+                        'imageable_type' => Blog::class,
+                        'imageable_id' => $blog->id,
+                    ]);
+                }
             }
+
+            if (!empty($validated['tagged_products'])) {
+                $taggedProducts = array_unique($validated['tagged_products']);
+                foreach ($taggedProducts as $productId) {
+                    \App\Models\BlogProductTag::create([
+                        'blog_id' => $blog->id,
+                        'product_id' => $productId,
+                    ]);
+                }
+            }
+
+            return response()->json(['message' => 'Blog created successfully', 'blog' => $blog]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        $userId = Auth::guard('sanctum')->id();
+        $blog = Blog::findOrFail($id);
+
+        if ($blog->user_id !== $userId && auth()->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        if (!empty($validated['tagged_products'])) {
-            // Remove duplicates
-            $taggedProducts = array_unique($validated['tagged_products']);
-            foreach ($taggedProducts as $productId) {
-                \App\Models\BlogProductTag::create([
-                    'blog_id' => $blog->id,
-                    'product_id' => $productId,
-                ]);
-            }
+        $blog->delete();
+
+        return response()->json(['message' => 'Blog deleted successfully']);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $userId = Auth::guard('sanctum')->id();
+        if (!$userId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        return response()->json(['message' => 'Blog created successfully', 'blog' => $blog]);
+        try {
+            $blog = Blog::findOrFail($id);
+
+            if ($blog->user_id !== $userId && auth()->user()->role !== 'admin') {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'location' => 'nullable|string|max:255',
+                'caption_html' => 'required|string',
+                'images' => 'array',
+                'tagged_products' => 'array',
+            ]);
+
+            $blog->update([
+                'title' => $validated['title'],
+                'location' => $validated['location'] ?? null,
+                'caption_html' => $validated['caption_html'],
+            ]);
+
+            // Refresh images
+            $blog->images()->delete();
+            if (!empty($validated['images'])) {
+                foreach ($validated['images'] as $index => $imageUrl) {
+                    $blog->images()->create([
+                        'image_url' => $imageUrl,
+                        'isMain' => $index === 0,
+                        'imageable_type' => Blog::class,
+                        'imageable_id' => $blog->id,
+                    ]);
+                }
+            }
+
+            // Refresh product tags
+            $blog->productTags()->delete();
+            if (!empty($validated['tagged_products'])) {
+                $taggedProducts = array_unique($validated['tagged_products']);
+                foreach ($taggedProducts as $productId) {
+                    \App\Models\BlogProductTag::create([
+                        'blog_id' => $blog->id,
+                        'product_id' => $productId,
+                    ]);
+                }
+            }
+
+            return response()->json(['message' => 'Blog updated successfully', 'blog' => $blog]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ], 500);
+        }
     }
 }

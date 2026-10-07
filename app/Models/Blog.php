@@ -13,7 +13,8 @@ class Blog extends Model
         'user_id',
         'title',
         'caption_html',
-        'likes_count'
+        'location',
+        'likes_count',
     ];
 
     public function user(): BelongsTo

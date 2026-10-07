@@ -45,6 +45,7 @@ Route::get('/promotions/active', [PromotionController::class, 'activePromotions'
 
 // SETUPS (Public Read)
 Route::get('/setups-grouped', [SetupsController::class, 'getGroupedSetups']);
+Route::get('/setups/setupviewdetails/{id}', [SetupsController::class, 'setupViewDetails']);
 
 // PRODUCTS (Custom public endpoints must precede resource routes)
 Route::get('/products/check-sku', [ProductController::class, 'checkSku']);
@@ -61,7 +62,11 @@ Route::apiResource('subcategory', SubCategoryController::class)->only(['index', 
 Route::apiResource('products', ProductController::class)->only(['index', 'show']);
 Route::apiResource('reviews', ReviewController::class)->only(['index']);
 Route::apiResource('setup-categories', \App\Http\Controllers\SetupCategoryController::class)->only(['index', 'show']);
+
+// BLOGS (Custom search-products MUST come before dynamic {id} route)
+Route::get('blogs/search-products', [BlogController::class, 'searchProducts']);
 Route::get('blogs', [BlogController::class, 'index']);
+Route::get('blogs/{id}', [BlogController::class, 'show']);
 
 // CART (Public access, relies on session ID or Sanctum token)
 Route::prefix('cart')->group(function () {
@@ -83,10 +88,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Media Uploads (Accessible by any authenticated user)
     Route::post('/imageupload/uploads', [ImageUploadController::class, 'upload']);
 
-    // Blogs User Actions
-    Route::post('/blogs', [BlogController::class, 'store']);
+    // Blogs User Actions (Static specific paths first)
     Route::get('/blogs/search-products', [BlogController::class, 'searchProducts']);
+    Route::post('/blogs', [BlogController::class, 'store']);
+    
+    // Dynamic routes with {id} follow after
     Route::post('/blogs/{id}/like', [BlogController::class, 'toggleLike']);
+    Route::delete('/blogs/{id}', [BlogController::class, 'destroy']);
+    Route::put('/blogs/{id}', [BlogController::class, 'update']);
 });
 
 

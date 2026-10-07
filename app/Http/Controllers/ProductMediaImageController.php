@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ProductMediaImage;
 use Illuminate\Http\Request;
 
-class PProductMediaImageController extends Controller {
+class ProductMediaImageController extends Controller {
 
     public function index() {
         $productimage = ProductImage::all();
