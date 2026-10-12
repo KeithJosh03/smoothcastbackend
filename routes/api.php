@@ -19,6 +19,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Controllers\BlogController;
@@ -76,6 +77,11 @@ Route::prefix('cart')->group(function () {
     Route::delete('/remove/{itemId}', [CartController::class, 'removeItem']);
 });
 
+Route::prefix('checkout')->group(function () {
+    Route::post('/calculate', [CheckoutController::class, 'calculate']);
+    Route::post('/process', [CheckoutController::class, 'process']);
+});
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated User Routes (Admins, Bloggers, Regular Users)
@@ -119,6 +125,14 @@ Route::middleware(['auth:sanctum', EnsureUserIsAdmin::class])->group(function ()
     });
 
     // Resource Management (Create, Update, Delete)
+    Route::patch('products/{id}/status', [ProductController::class, 'toggleStatus']);
+    Route::patch('products/sku/{id}/status', [ProductController::class, 'toggleSkuStatus']);
+    Route::patch('categories/{id}/status', [CategoryController::class, 'toggleStatus']);
+    Route::post('categories/reorder', [CategoryController::class, 'reorder']);
+    Route::patch('subcategories/{id}/status', [SubCategoryController::class, 'toggleStatus']);
+    Route::post('subcategories/reorder', [SubCategoryController::class, 'reorder']);
+    Route::patch('setups/{id}/status', [SetupsController::class, 'toggleStatus']);
+
     Route::apiResource('brands', BrandController::class)->only(['store', 'update', 'destroy']);
     Route::apiResource('categories', CategoryController::class)->only(['store', 'update', 'destroy']);
     Route::apiResource('subcategory', SubCategoryController::class)->only(['store', 'update', 'destroy']);

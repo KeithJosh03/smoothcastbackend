@@ -116,39 +116,43 @@ class CategoryController extends Controller
 
     public function categoryProductCollection()
     {
-        $activePromotions = \App\Models\Promotion::with(['products', 'setups'])->currentlyActive()->get();
+        $activePromotions = \App\Models\Promotion::with(['products'])->currentlyActive()->get();
 
         $categories = Category::select('category_id', 'category_name')
             ->where('is_active', true)
+            ->whereHas('products', function ($query) {
+                $query->where('is_active', true);
+            })
             ->with([
                 'products' => function ($query) {
-                    $query->select(
-                        'product_id',
-                        'product_title',
-                        'category_id',
-                        'brand_id',
-                        'base_price',
-                        'sub_category_id'
-                    )
-                    ->where('is_active', true)
-                    ->selectSub(function ($q) {
-                        $q->from('product_skus')
-                            ->whereColumn('product_skus.product_id', 'products.product_id')
-                            ->selectRaw('MIN(price)');
-                    }, 'min_variant_price')
-                    ->selectSub(function ($q) {
-                        $q->from('product_skus')
-                            ->whereColumn('product_skus.product_id', 'products.product_id')
-                            ->selectRaw('MAX(price)');
-                    }, 'max_variant_price')
-                    ->with([
-                        'brand:brand_id,brand_name',
-                        'subCategory:sub_category_id,sub_category_name',
-                        'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
-                        'firstProductSku.mainImage:image_id,imageable_id,imageable_type,image_url,isMain'
-                    ])
-                    ->latest('product_id')
-                    ->take(4);
+                    $query->where('is_active', true)
+                        ->select(
+                            'product_id',
+                            'product_title',
+                            'category_id',
+                            'brand_id',
+                            'base_price',
+                            'sub_category_id',
+                            'is_active'
+                        )
+                        ->selectSub(function ($q) {
+                            $q->from('product_skus')
+                                ->whereColumn('product_skus.product_id', 'products.product_id')
+                                ->selectRaw('MIN(price)');
+                        }, 'min_variant_price')
+                        ->selectSub(function ($q) {
+                            $q->from('product_skus')
+                                ->whereColumn('product_skus.product_id', 'products.product_id')
+                                ->selectRaw('MAX(price)');
+                        }, 'max_variant_price')
+                        ->with([
+                            'brand:brand_id,brand_name',
+                            'subCategory:sub_category_id,sub_category_name',
+                            'mainImage:image_id,imageable_id,imageable_type,image_url,isMain',
+                            'firstProductSku.mainImage:image_id,imageable_id,imageable_type,image_url,isMain'
+                        ])
+                        ->latest('product_id')
+                        ->take(4);
                 }
             ])
             ->orderBy('sort_order', 'asc')
@@ -201,13 +205,14 @@ class CategoryController extends Controller
         $sort = $request->get('sort', 'newest');
 
         $query = $category->products()
-            ->where('products.is_active', true) 
+            ->where('products.is_active', true)
             ->select(
                 'products.product_id',
                 'products.product_title',
                 'products.base_price',
                 'products.brand_id',
-                'products.sub_category_id'
+                'products.sub_category_id',
+                'products.is_active'
             )
             ->selectSub(function ($q) {
                 $q->from('product_skus')

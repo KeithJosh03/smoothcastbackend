@@ -21,7 +21,8 @@ class ProductListDashBoardResource extends JsonResource
                 ];
             }),
             'sku' => $this->sku,
-            'isActive' => (bool)$this->is_active,
+            'isActive' => (bool) $this->is_active,
+            'is_active' => (bool) $this->is_active,
             'stockQuantity' => $this->stock_quantity,
             'hasVariants' => $this->productTypeVariant && $this->productTypeVariant->isNotEmpty(),
             'productSkus' => ($this->productSkus ?? collect())->map(function ($sku) {
@@ -30,7 +31,8 @@ class ProductListDashBoardResource extends JsonResource
                     'skuCode' => $sku->sku_code,
                     'price' => $sku->price,
                     'stockQuantity' => $sku->stock_quantity,
-                    'isActive' => $sku->is_active,
+                    'isActive' => (bool) $sku->is_active,
+                    'is_active' => (bool) $sku->is_active,
                     'variantOptions' => ($sku->variantOptions ?? collect())->map(function ($opt) {
                         return [
                             'optionId' => $opt->variant_option_id,

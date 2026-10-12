@@ -49,6 +49,8 @@ class ProductCustomerViewResource extends JsonResource
             'subCategoryName' => $this->subCategory?->sub_category_name,
             'categoryName'    => $this->category?->category_name,
             'hasVariants'     => (bool) $hasVariants,
+            'isActive'        => (bool) ($this->is_active ?? true),
+            'is_active'       => (bool) ($this->is_active ?? true),
             'sku'             => $this->sku,
             'stockQuantity'   => $totalStock,
             'inStock'         => $totalStock > 0,
@@ -90,6 +92,8 @@ class ProductCustomerViewResource extends JsonResource
                         : null,
                     'stockQuantity'    => $sku->stock_quantity,
                     'inStock'          => $sku->stock_quantity > 0,
+                    'isActive'         => (bool) ($sku->is_active ?? true),
+                    'is_active'        => (bool) ($sku->is_active ?? true),
                     'variantOptionIds' => $sku->variantOptions ? $sku->variantOptions->pluck('variant_option_id')->toArray() : [],
                     'skuImages'        => $sku->images && $sku->images->isNotEmpty() ? $sku->images->map(function ($img) use ($baseUrl) {
                         return [

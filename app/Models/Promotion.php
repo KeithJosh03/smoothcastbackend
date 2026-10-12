@@ -30,15 +30,6 @@ class Promotion extends Model
 
     // --- Relationships ---
 
-    public function setups(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Setup::class,
-            'promotion_setup',
-            'promotion_id',
-            'setup_id'
-        );
-    }
 
     public function products(): BelongsToMany
     {
@@ -49,6 +40,17 @@ class Promotion extends Model
             'product_id'
         );
     }
+
+    public function setups(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Setup::class,
+            'promotion_setup',
+            'promotion_id',
+            'setup_id'
+        );
+    }
+
 
     public function scopeCurrentlyActive(Builder $query): Builder
     {

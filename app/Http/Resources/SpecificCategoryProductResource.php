@@ -18,6 +18,8 @@ class SpecificCategoryProductResource extends JsonResource
             'brandName'        => $this->brand?->brand_name,
             'subCategoryName'  => $this->subCategory?->sub_category_name,
             'productThumbNail' => $this->resolveThumbnail(),
+            'isActive'         => (bool) ($this->is_active ?? true),
+            'is_active'        => (bool) ($this->is_active ?? true),
         ];
     }
 

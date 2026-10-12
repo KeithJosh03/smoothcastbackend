@@ -18,14 +18,20 @@ class ProductSku extends Model
         'price',
         'stock_quantity',
         'is_active',
+        'packaging_type',
+        'weight_g',
+        'weight',
+        'is_bulky',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_bulky'  => 'boolean',
+        'weight_g'  => 'integer',
         'price'     => 'decimal:2',
     ];
 
-    protected $appends = ['active_promotion', 'final_price'];
+    protected $appends = ['active_promotion', 'final_price', 'effective_weight', 'effective_is_bulky', 'effective_packaging_type'];
 
     public function product(): BelongsTo
     {
@@ -89,5 +95,29 @@ class ProductSku extends Model
         }
 
         return $originalPrice;
+    }
+
+    public function getEffectiveWeightAttribute(): int
+    {
+        return $this->weight_g ?? $this->weight ?? $this->product->weight_g ?? $this->product->weight ?? 0;
+    }
+
+    public function getEffectiveIsBulkyAttribute(): bool
+    {
+        if (in_array($this->packaging_type, ['BOX_L', 'LONG_PARCEL'])) {
+            return true;
+        }
+        if ($this->is_bulky !== null) {
+            return (bool) $this->is_bulky;
+        }
+        if ($this->product && in_array($this->product->packaging_type, ['BOX_L', 'LONG_PARCEL'])) {
+            return true;
+        }
+        return (bool) ($this->product->is_bulky ?? false);
+    }
+
+    public function getEffectivePackagingTypeAttribute(): string
+    {
+        return $this->packaging_type ?? $this->product->packaging_type ?? 'POUCH_S';
     }
 }

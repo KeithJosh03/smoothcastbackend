@@ -21,6 +21,8 @@ class BrandSpecificProducts extends JsonResource
             'subCategoryName'  => $this->subCategory?->sub_category_name,
             'mainImage'        => $this->resolveThumbnail(),
             'discount'         => $activePromo ? $activePromo->discount_type : null,
+            'isActive'         => (bool) ($this->is_active ?? true),
+            'is_active'        => (bool) ($this->is_active ?? true),
         ];
     }
 

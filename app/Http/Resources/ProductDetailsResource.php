@@ -24,6 +24,13 @@ class ProductDetailsResource extends JsonResource
             // Simple Product Fields
             'sku'             => $this->sku,
             'stockQuantity'   => $this->stock_quantity,
+            'weight'          => (float) ($this->weight ?? 0),
+            'weight_g'        => (int) ($this->weight_g ?? $this->weight ?? 0),
+            'weightG'         => (int) ($this->weight_g ?? $this->weight ?? 0),
+            'packaging_type'  => $this->packaging_type ?? 'POUCH_S',
+            'packagingType'   => $this->packaging_type ?? 'POUCH_S',
+            'isBulky'         => (bool) ($this->is_bulky ?? false),
+            'is_bulky'        => (bool) ($this->is_bulky ?? false),
 
             // Categorization
             'brand' => [
@@ -74,6 +81,13 @@ class ProductDetailsResource extends JsonResource
                         'price'            => (float) $sku->price,
                         'stockQuantity'    => (int) $sku->stock_quantity,
                         'isActive'         => (bool) $sku->is_active,
+                        'weight'           => (float) ($sku->weight ?? 0),
+                        'weight_g'         => (int) ($sku->weight_g ?? $sku->weight ?? 0),
+                        'weightG'          => (int) ($sku->weight_g ?? $sku->weight ?? 0),
+                        'packaging_type'   => $sku->packaging_type ?? 'POUCH_S',
+                        'packagingType'    => $sku->packaging_type ?? 'POUCH_S',
+                        'isBulky'          => (bool) ($sku->is_bulky ?? false),
+                        'is_bulky'         => (bool) ($sku->is_bulky ?? false),
                         'imageUrl'         => $sku->images->first()?->image_url,
                         // Array of Option IDs that make up this specific combination
                         'variantOptionIds' => $sku->variantOptions->pluck('variant_option_id')->toArray(),

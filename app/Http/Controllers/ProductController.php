@@ -58,9 +58,17 @@ class ProductController extends Controller
             'variant_matrix.*.price'                          => 'required_with:variant_matrix|numeric|min:0',
             'variant_matrix.*.stock_quantity'                 => 'required_with:variant_matrix|integer|min:0',
             'variant_matrix.*.is_active'                      => 'nullable|boolean',
+            'variant_matrix.*.weight'                         => 'nullable|numeric|min:0',
+            'variant_matrix.*.weight_g'                       => 'nullable|integer|min:0',
+            'variant_matrix.*.packaging_type'                 => 'nullable|string|in:POUCH_S,POUCH_L,BOX_S,BOX_M,BOX_L,LONG_PARCEL',
+            'variant_matrix.*.is_bulky'                       => 'nullable|boolean',
             'variant_matrix.*.image_url'                      => 'nullable|string',
             'variant_matrix.*.variant_option_ids'              => 'nullable|array',
-            'variant_matrix.*.variant_option_values'          => 'nullable|array'
+            'variant_matrix.*.variant_option_values'          => 'nullable|array',
+            'weight'                                          => 'nullable|numeric|min:0',
+            'weight_g'                                        => 'nullable|integer|min:0',
+            'packaging_type'                                  => 'nullable|string|in:POUCH_S,POUCH_L,BOX_S,BOX_M,BOX_L,LONG_PARCEL',
+            'is_bulky'                                        => 'nullable|boolean'
         ]);
 
         return DB::transaction(function () use ($validated, $hasVariants) {
@@ -69,6 +77,10 @@ class ProductController extends Controller
                 : (!empty($validated['sku']) 
                     ? $validated['sku'] 
                     : 'SKU-' . strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['product_title']), 0, 4)) . '-' . strtoupper(substr(md5(uniqid()), 0, 4)));
+
+            $pkgType = $validated['packaging_type'] ?? 'POUCH_S';
+            $weightG = $validated['weight_g'] ?? ($validated['weight'] ?? 0);
+            $isBulky = in_array($pkgType, ['BOX_L', 'LONG_PARCEL']) || (!empty($validated['is_bulky']));
 
             $product = Product::create([
                 'product_title'   => $validated['product_title'],
@@ -81,7 +93,11 @@ class ProductController extends Controller
                 'brand_id'        => $validated['brand_id'] ?? null,
                 'sku'             => $masterSku,
                 'stock_quantity'  => $hasVariants ? null : ($validated['stock_quantity'] ?? 0),
-                'is_active'       => $validated['is_active'] ?? true,
+                'weight'          => $weightG,
+                'weight_g'        => $weightG,
+                'packaging_type'  => $pkgType,
+                'is_bulky'        => $isBulky,
+                'is_active'       => array_key_exists('is_active', $validated) ? (bool) $validated['is_active'] : true,
                 'release_date'    => Carbon::now(),
             ]);
 
@@ -160,9 +176,17 @@ class ProductController extends Controller
             'variant_matrix.*.price'                          => 'required_with:variant_matrix|numeric|min:0',
             'variant_matrix.*.stock_quantity'                 => 'required_with:variant_matrix|integer|min:0',
             'variant_matrix.*.is_active'                      => 'nullable|boolean',
+            'variant_matrix.*.weight'                         => 'nullable|numeric|min:0',
+            'variant_matrix.*.weight_g'                       => 'nullable|integer|min:0',
+            'variant_matrix.*.packaging_type'                 => 'nullable|string|in:POUCH_S,POUCH_L,BOX_S,BOX_M,BOX_L,LONG_PARCEL',
+            'variant_matrix.*.is_bulky'                       => 'nullable|boolean',
             'variant_matrix.*.image_url'                      => 'nullable|string',
             'variant_matrix.*.variant_option_ids'              => 'nullable|array',
-            'variant_matrix.*.variant_option_values'          => 'nullable|array'
+            'variant_matrix.*.variant_option_values'          => 'nullable|array',
+            'weight'                                          => 'nullable|numeric|min:0',
+            'weight_g'                                        => 'nullable|integer|min:0',
+            'packaging_type'                                  => 'nullable|string|in:POUCH_S,POUCH_L,BOX_S,BOX_M,BOX_L,LONG_PARCEL',
+            'is_bulky'                                        => 'nullable|boolean'
         ]);
 
         return DB::transaction(function () use ($product, $validated, $hasVariants) {
@@ -171,6 +195,10 @@ class ProductController extends Controller
                 : (!empty($validated['sku']) 
                     ? $validated['sku'] 
                     : 'SKU-' . strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $validated['product_title']), 0, 4)) . '-' . strtoupper(substr(md5(uniqid()), 0, 4)));
+
+            $pkgType = $validated['packaging_type'] ?? $product->packaging_type ?? 'POUCH_S';
+            $weightG = $validated['weight_g'] ?? ($validated['weight'] ?? ($product->weight_g ?? $product->weight ?? 0));
+            $isBulky = in_array($pkgType, ['BOX_L', 'LONG_PARCEL']) || (!empty($validated['is_bulky']));
 
             $product->update([
                 'product_title'   => $validated['product_title'],
@@ -183,7 +211,11 @@ class ProductController extends Controller
                 'brand_id'        => $validated['brand_id'] ?? null,
                 'sku'             => $masterSku,
                 'stock_quantity'  => $hasVariants ? null : ($validated['stock_quantity'] ?? 0),
-                'is_active'       => $validated['is_active'] ?? true,
+                'weight'          => $weightG,
+                'weight_g'        => $weightG,
+                'packaging_type'  => $pkgType,
+                'is_bulky'        => $isBulky,
+                'is_active'       => array_key_exists('is_active', $validated) ? (bool) $validated['is_active'] : $product->is_active,
             ]);
 
             $product->images()->delete();
@@ -236,29 +268,39 @@ class ProductController extends Controller
         ]);
     }
 
-    public function toggleStatus($id)
+    public function toggleStatus($id, Request $request)
     {
         $product = Product::findOrFail($id);
-        $product->is_active = !$product->is_active;
+        $newStatus = $request->has('is_active') 
+            ? $request->boolean('is_active') 
+            : ($request->has('isActive') ? $request->boolean('isActive') : !$product->is_active);
+
+        $product->is_active = $newStatus;
         $product->save();
 
         return response()->json([
-            'status'  => true,
-            'message' => 'Status updated successfully',
-            'is_active' => $product->is_active
+            'status'    => true,
+            'message'   => 'Status updated successfully',
+            'is_active' => (bool) $product->is_active,
+            'isActive'  => (bool) $product->is_active,
         ]);
     }
 
-    public function toggleSkuStatus($skuId)
+    public function toggleSkuStatus($skuId, Request $request)
     {
         $sku = \App\Models\ProductSku::findOrFail($skuId);
-        $sku->is_active = !$sku->is_active;
+        $newStatus = $request->has('is_active') 
+            ? $request->boolean('is_active') 
+            : ($request->has('isActive') ? $request->boolean('isActive') : !$sku->is_active);
+
+        $sku->is_active = $newStatus;
         $sku->save();
 
         return response()->json([
-            'status'  => true,
-            'message' => 'SKU status updated successfully',
-            'is_active' => $sku->is_active
+            'status'    => true,
+            'message'   => 'SKU status updated successfully',
+            'is_active' => (bool) $sku->is_active,
+            'isActive'  => (bool) $sku->is_active,
         ]);
     }
 
@@ -374,7 +416,14 @@ class ProductController extends Controller
 
     public function productListDashboardSearch(Request $request)
     {
-        $query = Product::with(['category', 'subCategory', 'brand', 'images']);
+        $query = Product::with([
+            'category',
+            'subCategory',
+            'brand',
+            'images',
+            'productTypeVariant',
+            'productSkus.variantOptions',
+        ])->orderBy('product_id', 'desc');
 
         if ($request->filled('productTitle')) {
             $query->where('product_title', 'LIKE', '%' . $request->productTitle . '%');
@@ -386,6 +435,15 @@ class ProductController extends Controller
 
         if ($request->filled('categoryId')) {
             $query->where('category_id', $request->categoryId);
+        }
+
+        if ($request->filled('status')) {
+            $statusVal = strtolower((string) $request->status);
+            if ($statusVal === 'active' || $statusVal === '1' || $statusVal === 'true') {
+                $query->where('is_active', true);
+            } elseif ($statusVal === 'inactive' || $statusVal === '0' || $statusVal === 'false') {
+                $query->where('is_active', false);
+            }
         }
 
         $products = $query->paginate(10);
@@ -493,11 +551,19 @@ class ProductController extends Controller
                 : [];
 
             foreach ($validated['variant_matrix'] as $mRow) {
+                $skuPkg = $mRow['packaging_type'] ?? $product->packaging_type ?? 'POUCH_S';
+                $skuWeightG = isset($mRow['weight_g']) ? (int) $mRow['weight_g'] : (isset($mRow['weight']) ? (int) $mRow['weight'] : ($product->weight_g ?? $product->weight ?? null));
+                $skuIsBulky = in_array($skuPkg, ['BOX_L', 'LONG_PARCEL']) || (!empty($mRow['is_bulky']));
+
                 $skuRecord = $product->productSkus()->create([
                     'sku_code'       => $mRow['sku_code'],
                     'price'          => $mRow['price'] ?? 0.00,
                     'stock_quantity' => $mRow['stock_quantity'] ?? 0,
-                    'is_active'      => $mRow['is_active'] ?? true,
+                    'weight'         => $skuWeightG,
+                    'weight_g'       => $skuWeightG,
+                    'packaging_type' => $skuPkg,
+                    'is_bulky'       => $skuIsBulky,
+                    'is_active'      => array_key_exists('is_active', $mRow) ? (bool) $mRow['is_active'] : true,
                 ]);
 
                 if (!empty($mRow['image_url']) && is_string($mRow['image_url'])) {

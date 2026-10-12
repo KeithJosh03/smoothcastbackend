@@ -130,12 +130,24 @@ class BlogController extends Controller
     {
         $query = $request->get('q', '');
         
-        $products = \App\Models\Product::where('product_title', 'LIKE', "%{$query}%")
+        $products = \App\Models\Product::with(['brand', 'images'])
+            ->where('product_title', 'LIKE', "%{$query}%")
             ->where('is_active', true)
             ->limit(10)
-            ->get(['product_id as id', 'product_title as display']);
+            ->get();
+
+        $formatted = $products->map(function ($p) {
+            $mainImg = $p->images->where('isMain', 1)->first() ?? $p->images->first();
+            return [
+                'id'      => (string) $p->product_id,
+                'display' => $p->product_title,
+                'price'   => $p->base_price ? (string) $p->base_price : null,
+                'brand'   => $p->brand?->brand_name ?? null,
+                'image'   => $mainImg?->image_url ?? null,
+            ];
+        });
             
-        return response()->json($products);
+        return response()->json($formatted);
     }
 
     public function store(Request $request)

@@ -23,14 +23,23 @@ class ProductDetailsShowResource extends JsonResource
         $baseUrl = rtrim(config('app.url'), '/');
 
         return [
-            'productId'      => $this->product_id,
-            'productTitle'   => $this->product_title,
-            'basePrice'      => $effectiveBasePrice,
-            'description'    => $this->description,
-            'features'       => $this->features,
+            'productId'     => $this->product_id,
+            'productTitle'  => $this->product_title,
+            'basePrice'     => $effectiveBasePrice,
+            'description'   => $this->description,
+            'features'      => $this->features,
             'specifications' => $this->specifications,
-            'sku'            => $this->sku,
-            'stockQuantity'  => $this->stock_quantity,
+            'sku'           => $this->sku,
+            'stockQuantity' => $this->stock_quantity,
+            'weight'        => (float) ($this->weight ?? 0),    
+            'weight_g'      => (int) ($this->weight_g ?? $this->weight ?? 0),
+            'weightG'       => (int) ($this->weight_g ?? $this->weight ?? 0),
+            'packaging_type'=> $this->packaging_type ?? 'POUCH_S',
+            'packagingType' => $this->packaging_type ?? 'POUCH_S',
+            'isBulky'       => (bool) ($this->is_bulky ?? false),     
+            'is_bulky'      => (bool) ($this->is_bulky ?? false),
+            'isActive'      => (bool) ($this->is_active ?? true),
+            'is_active'     => (bool) ($this->is_active ?? true),
 
             'brand' => [
                 'brandId'   => $this->brand_id,
@@ -86,10 +95,17 @@ class ProductDetailsShowResource extends JsonResource
                     'promotionInfo'       => $activePromo ? [
                         'id'            => $activePromo->id,
                         'name'          => $activePromo->name,
-                        'discountType'  => $activePromo->discount_type,   // PERCENTAGE | FIXED_AMOUNT
+                        'discountType'  => $activePromo->discount_type,
                         'discountValue' => (float) $activePromo->discount_value,
-                        'applyTo'       => $activePromo->apply_to,        // ALL | CATEGORY | PRODUCT
+                        'applyTo'       => $activePromo->apply_to,
                     ] : null,
+                    'weight'              => (float) ($sku->weight ?? 0),
+                    'weight_g'            => (int) ($sku->weight_g ?? $sku->weight ?? 0),
+                    'weightG'             => (int) ($sku->weight_g ?? $sku->weight ?? 0),
+                    'packaging_type'      => $sku->packaging_type ?? 'POUCH_S',
+                    'packagingType'       => $sku->packaging_type ?? 'POUCH_S',
+                    'isBulky'             => (bool) ($sku->is_bulky ?? false),
+                    'is_bulky'            => (bool) ($sku->is_bulky ?? false),
                     'variantOptionIds'    => $sku->variantOptions ? $sku->variantOptions->pluck('variant_option_id')->toArray() : [],
                     'variantOptionValues' => $sku->variantOptions ? $sku->variantOptions->pluck('variant_value')->toArray() : [],
                 ];

@@ -27,15 +27,20 @@ class Setup extends Model
         'is_published',
         'start_date',
         'end_date',
+        'weight',
+        'is_bulky',
     ];
 
     protected $casts = [
         'is_published' => 'boolean',
+        'is_bulky' => 'boolean',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'bundle_price' => 'decimal:2',
         'discount_percentage' => 'decimal:2',
     ];
+
+    protected $appends = ['effective_weight', 'effective_is_bulky'];
 
     public function items(): HasMany
     {
@@ -63,53 +68,36 @@ class Setup extends Model
             ->where('isMain', true);
     }
 
-    public function promotions(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function getEffectiveWeightAttribute(): int
     {
-        return $this->belongsToMany(
-            Promotion::class,
-            'promotion_setup',
-            'setup_id',
-            'promotion_id'
-        );
+        if (!is_null($this->weight)) {
+            return $this->weight;
+        }
+        
+        return $this->items->sum(function ($item) {
+            $qty = $item->quantity ?? 1;
+            if ($item->sku) {
+                return $item->sku->effective_weight * $qty;
+            } elseif ($item->product) {
+                return $item->product->weight * $qty;
+            }
+            return 0;
+        });
     }
 
-    public function getActivePromotionAttribute(): ?Promotion
+    public function getEffectiveIsBulkyAttribute(): bool
     {
-        $promotions = Promotion::currentlyActive()
-            ->where(function ($query) {
-                // 1. Applies store-wide
-                $query->where('apply_to', 'ALL')
-                // 2. Directly targets this specific setup
-                ->orWhere(function ($q) {
-                    $q->where('apply_to', 'SETUP')
-                    ->whereHas('setups', fn($s) => $s->where('setups.setup_id', $this->setup_id));
-                });
-            })
-            ->get();
-
-        if ($promotions->isEmpty()) {
-            return null;
+        if (!is_null($this->is_bulky)) {
+            return $this->is_bulky;
         }
 
-        $bestPromotion = null;
-        $maxDiscount = -1;
-
-        $price = (float) $this->bundle_price;
-
-        foreach ($promotions as $promotion) {
-            $discountAmount = 0;
-            if ($promotion->discount_type === 'PERCENTAGE') {
-                $discountAmount = $price * ($promotion->discount_value / 100);
-            } else {
-                $discountAmount = (float) $promotion->discount_value;
-            }
-
-            if ($discountAmount > $maxDiscount) {
-                $maxDiscount = $discountAmount;
-                $bestPromotion = $promotion;
+        foreach ($this->items as $item) {
+            if ($item->sku && $item->sku->effective_is_bulky) {
+                return true;
+            } elseif ($item->product && $item->product->is_bulky) {
+                return true;
             }
         }
-
-        return $bestPromotion;
+        return false;
     }
 }

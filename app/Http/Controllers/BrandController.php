@@ -139,13 +139,15 @@ class BrandController extends Controller
         $sort = $request->get('sort', 'newest');
 
         $query = $brand->brandProducts()
+            ->where('products.is_active', true)
             ->select(
                 'products.product_id',
                 'products.product_title',
                 'products.base_price',
                 'products.brand_id',
                 'products.sub_category_id',
-                'products.category_id'
+                'products.category_id',
+                'products.is_active'
             )
             ->selectSub(function ($q) {
                 $q->from('product_skus')

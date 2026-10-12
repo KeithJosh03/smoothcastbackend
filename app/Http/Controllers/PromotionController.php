@@ -12,7 +12,7 @@ class PromotionController extends Controller
 
     public function index()
     {
-        $promotions = Promotion::with(['setups', 'products'])
+        $promotions = Promotion::with(['products'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -28,14 +28,14 @@ class PromotionController extends Controller
             'name'           => 'required|string|max:255',
             'discount_type'  => 'required|in:PERCENTAGE,FIXED_AMOUNT',
             'discount_value' => 'required|numeric|min:0.01',
-            'apply_to'        => 'required|in:ALL,SETUP,PRODUCT',
+            'apply_to'        => 'required|in:ALL,PRODUCT',
             'start_date'     => 'nullable|date',
             'end_date'       => 'nullable|date|after_or_equal:start_date',
             'is_active'      => 'boolean',
             'target_ids'     => [
                 'nullable',
                 'array',
-                Rule::requiredIf(fn () => in_array($request->apply_to, ['SETUP', 'PRODUCT'])),
+                Rule::requiredIf(fn () => $request->apply_to === 'PRODUCT'),
             ],
             'target_ids.*'   => 'integer',
         ]);
@@ -51,21 +51,19 @@ class PromotionController extends Controller
         ]);
 
         // Sync pivot target relationships
-        if ($validated['apply_to'] === 'SETUP' && !empty($validated['target_ids'])) {
-            $promotion->setups()->sync($validated['target_ids']);
-        } elseif ($validated['apply_to'] === 'PRODUCT' && !empty($validated['target_ids'])) {
+        if ($validated['apply_to'] === 'PRODUCT' && !empty($validated['target_ids'])) {
             $promotion->products()->sync($validated['target_ids']);
         }
 
         return response()->json([
             'message'   => 'Promotion created successfully!',
-            'promotion' => $promotion->load(['setups', 'products']),
+            'promotion' => $promotion->load(['products']),
         ], 201);
     }
 
     public function show($id)
     {
-        $promotion = Promotion::with(['setups', 'products'])->findOrFail($id);
+        $promotion = Promotion::with(['products'])->findOrFail($id);
         return response()->json($promotion);
     }
 
@@ -77,7 +75,7 @@ class PromotionController extends Controller
             'name'           => 'sometimes|required|string|max:255',
             'discount_type'  => 'sometimes|required|in:PERCENTAGE,FIXED_AMOUNT',
             'discount_value' => 'sometimes|required|numeric|min:0.01',
-            'apply_to'        => 'sometimes|required|in:ALL,SETUP,PRODUCT',
+            'apply_to'        => 'sometimes|required|in:ALL,PRODUCT',
             'start_date'     => 'nullable|date',
             'end_date'       => 'nullable|date|after_or_equal:start_date',
             'is_active'      => 'nullable|boolean',
@@ -92,24 +90,17 @@ class PromotionController extends Controller
         // Re-sync pivots if scope or target_ids were supplied
         $applyTo = $request->get('apply_to', $promotion->apply_to);
         
-        if ($applyTo === 'SETUP') {
-            $promotion->products()->detach();
-            if ($request->has('target_ids')) {
-                $promotion->setups()->sync($request->target_ids);
-            }
-        } elseif ($applyTo === 'PRODUCT') {
-            $promotion->setups()->detach();
+        if ($applyTo === 'PRODUCT') {
             if ($request->has('target_ids')) {
                 $promotion->products()->sync($request->target_ids);
             }
         } else { // ALL
-            $promotion->setups()->detach();
             $promotion->products()->detach();
         }
 
         return response()->json([
             'message'   => 'Promotion updated successfully!',
-            'promotion' => $promotion->load(['setups', 'products']),
+            'promotion' => $promotion->load(['products']),
         ]);
     }
 
@@ -117,7 +108,6 @@ class PromotionController extends Controller
     {
         $promotion = Promotion::findOrFail($id);
         
-        $promotion->setups()->detach();
         $promotion->products()->detach();
         $promotion->delete();
 
@@ -136,7 +126,6 @@ class PromotionController extends Controller
             })
             ->select('promotion_id', 'name', 'discount_type', 'discount_value', 'apply_to', 'start_date', 'end_date')
             ->with([
-                'setups:setup_id,bundle_title',
                 'products:product_id,product_title',
             ])
             ->get();
@@ -152,9 +141,7 @@ class PromotionController extends Controller
                 'endDate' => $p->end_date ? $p->end_date->format('Y-m-d') : null,
                 'targetIds' => $p->apply_to === 'ALL' 
                     ? [] 
-                    : ($p->apply_to === 'SETUP' 
-                        ? $p->setups->pluck('setup_id')->toArray() 
-                        : $p->products->pluck('product_id')->toArray()),
+                    : $p->products->pluck('product_id')->toArray(),
             ];
         });
 

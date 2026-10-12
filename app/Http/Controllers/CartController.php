@@ -71,7 +71,8 @@ class CartController extends Controller
     {
         return [
             'items.product.images',
-            'items.sku',
+            'items.sku.variantOptions.variantType',
+            'items.sku.images',
             'items.setup.images',
         ];
     }

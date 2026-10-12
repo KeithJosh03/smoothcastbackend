@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -21,11 +22,15 @@ class Product extends Model
         'brand_id', 'category_id', 'sub_category_id', 
         'product_title', 'base_price', 'description', 
         'features', 'specifications', 'release_date',
-        'sku', 'stock_quantity', 'is_active'
+        'sku', 'stock_quantity', 'is_active',
+        'packaging_type', 'weight_g',
+        'weight', 'is_bulky'
     ];
 
     protected $casts = [
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'is_bulky' => 'boolean',
+        'weight_g' => 'integer',
     ];
 
     public function brand(): BelongsTo

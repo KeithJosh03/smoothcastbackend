@@ -77,21 +77,16 @@ class SetupsController extends Controller
             ]
         ]);
     }
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        $setups = Setup::with(['items.product', 'items.sku', 'inclusions'])->paginate(10);
+        $setups = Setup::with(['items.product', 'items.sku', 'inclusions', 'images', 'mainImage'])->paginate(10);
         return response()->json([
             'status' => true,
             'data' => $setups
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -109,6 +104,8 @@ class SetupsController extends Controller
             'is_published' => 'required|boolean',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
+            'weight' => 'nullable|numeric|min:0',
+            'is_bulky' => 'nullable|boolean',
             
             'bundle_items' => 'present|array',
             'bundle_items.*.product_id' => 'required|exists:products,product_id',
@@ -145,6 +142,8 @@ class SetupsController extends Controller
                 'is_published' => $validated['is_published'],
                 'start_date' => $validated['start_date'] ?? null,
                 'end_date' => $validated['end_date'] ?? null,
+                'weight' => $validated['weight'] ?? null,
+                'is_bulky' => $validated['is_bulky'] ?? null,
             ]);
 
             if (!empty($validated['hero_banner'])) {
@@ -184,7 +183,7 @@ class SetupsController extends Controller
      */
     public function show($id)
     {
-        $setup = Setup::with(['items.product', 'items.sku', 'inclusions'])->findOrFail($id);
+        $setup = Setup::with(['items.product', 'items.sku', 'inclusions', 'images'])->findOrFail($id);
         return response()->json([
             'status' => true,
             'data' => $setup
@@ -213,6 +212,8 @@ class SetupsController extends Controller
             'is_published' => 'required|boolean',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
+            'weight' => 'nullable|numeric|min:0',
+            'is_bulky' => 'nullable|boolean',
             
             'bundle_items' => 'present|array',
             'bundle_items.*.product_id' => 'required|exists:products,product_id',
@@ -245,13 +246,16 @@ class SetupsController extends Controller
                 'is_published' => $validated['is_published'],
                 'start_date' => $validated['start_date'] ?? null,
                 'end_date' => $validated['end_date'] ?? null,
+                'weight' => $validated['weight'] ?? null,
+                'is_bulky' => $validated['is_bulky'] ?? null,
             ]);
 
-            if (isset($validated['hero_banner'])) {
+            if (array_key_exists('hero_banner', $validated) || $request->has('hero_banner')) {
                 $setup->images()->delete();
-                if (!empty($validated['hero_banner'])) {
+                $heroBanner = $request->input('hero_banner');
+                if (!empty($heroBanner) && is_string($heroBanner)) {
                     $setup->images()->create([
-                        'image_url' => $validated['hero_banner'],
+                        'image_url' => $heroBanner,
                         'isMain' => true,
                     ]);
                 }

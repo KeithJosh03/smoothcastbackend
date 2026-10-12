@@ -11,29 +11,18 @@ class SetupCustomerViewResource extends JsonResource
     {
         $baseUrl = rtrim(config('app.url'), '/');
 
-        $promotion = $this->active_promotion;
-        $hasDiscount = $promotion !== null;
-        $finalPrice = (float) $this->bundle_price;
-
-        if ($hasDiscount) {
-            if ($promotion->discount_type === 'PERCENTAGE') {
-                $finalPrice = max(0, $finalPrice - ($finalPrice * ($promotion->discount_value / 100)));
-            } else {
-                $finalPrice = max(0, $finalPrice - (float) $promotion->discount_value);
-            }
-        }
+        $bundlePrice = (float) $this->bundle_price;
+        $retail = $this->retail_price !== null ? (float) $this->retail_price : null;
+        $hasDiscount = ($retail && $retail > $bundlePrice) || (!empty($this->discount_percentage) && (float) $this->discount_percentage > 0);
 
         $discountLabel = null;
-        if ($hasDiscount) {
-            $discountLabel = $promotion->discount_type === 'PERCENTAGE'
-                ? "-{$promotion->discount_value}%"
-                : "-₱{$promotion->discount_value}";
+        if (!empty($this->discount_percentage) && (float) $this->discount_percentage > 0) {
+            $discountLabel = '-' . round((float) $this->discount_percentage) . '%';
+        } elseif ($retail && $retail > $bundlePrice) {
+            $discountLabel = '-₱' . number_format($retail - $bundlePrice, 2);
         }
 
-        $retail = $this->retail_price !== null ? (float) $this->retail_price : null;
-        $compareAt = $retail && $retail > (float) $this->bundle_price
-            ? $retail
-            : ($hasDiscount ? (float) $this->bundle_price : null);
+        $compareAt = ($retail && $retail > $bundlePrice) ? $retail : null;
 
         return [
             'setupId' => $this->setup_id,
@@ -44,9 +33,9 @@ class SetupCustomerViewResource extends JsonResource
             'pricingType' => $this->pricing_type,
             'bundlePrice' => (string) $this->bundle_price,
             'retailPrice' => $this->retail_price !== null ? (string) $this->retail_price : null,
-            'finalPrice' => (string) $finalPrice,
+            'finalPrice' => (string) $this->bundle_price,
             'compareAtPrice' => $compareAt !== null ? (string) $compareAt : null,
-            'hasDiscount' => $hasDiscount || ($retail && $retail > (float) $this->bundle_price),
+            'hasDiscount' => $hasDiscount,
             'discountLabel' => $discountLabel,
             'stockQuantity' => (int) $this->stock_quantity,
             'inStock' => (int) $this->stock_quantity > 0,
